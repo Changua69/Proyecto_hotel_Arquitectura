@@ -1,0 +1,37 @@
+{
+  "rnf": "RNF-01 (persistencia)",
+  "reservas_en_base": 5003,
+  "consultas": 20,
+  "tiempos_ms": [
+    1.588,
+    0.487,
+    0.417,
+    0.415,
+    0.365,
+    0.541,
+    0.342,
+    0.37,
+    0.316,
+    0.323,
+    0.343,
+    0.218,
+    0.164,
+    0.214,
+    0.191,
+    0.197,
+    0.144,
+    0.133,
+    0.148,
+    0.161
+  ],
+  "max_ms": 1.588,
+  "promedio_ms": 0.354,
+  "umbral_ms": 200,
+  "cumple": true,
+  "entorno": {
+    "python": "3.12.3",
+    "psycopg": "3.3.8",
+    "postgresql": "16.15 (Debian 16.15-1.pgdg13+2)",
+    "so": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  }
+}

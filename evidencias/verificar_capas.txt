@@ -1,0 +1,1 @@
+OK: no hay SQL fuera de app/persistence (0 hallazgos)
