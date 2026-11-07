@@ -3,7 +3,7 @@
 **Arquitectura de Sistemas I** · Docente: Ing. Elías Buitrago Bolivar
 **Integrantes:** Erick Genaldo Flores · Juan David Arroyave
 
-Corte vertical: **Crear una reserva** (actor: recepcionista). Esta semana se prepara la base técnica:
+Corte vertical: **Crear una reserva** (actor: huesped). Esta semana se prepara la base técnica:
 dos RF priorizados, sus RNF verificables según ISO/IEC 25010:2023, una base mínima con datos de prueba
 y operaciones de persistencia comprobadas contra PostgreSQL real.
 
