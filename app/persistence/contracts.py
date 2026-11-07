@@ -1,6 +1,6 @@
 """Contratos de los repositorios (entradas y resultados).
 
-Los servicios de la semana 2 dependen de estos protocolos, no de PostgreSQL.
+Los servicios de la semana 2 dependen de estos protocolos, no de MongoDB.
 Así pueden probarse con repositorios simulados en memoria (RNF-06).
 """
 from datetime import date

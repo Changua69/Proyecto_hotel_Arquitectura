@@ -1,15 +1,21 @@
-"""Repositorios PostgreSQL del corte vertical.
+"""Repositorios MongoDB del corte vertical.
 
 Reglas de la capa:
-- Aquí (y en /db) está TODO el SQL del sistema. Servicios, endpoints y pantallas no contienen SQL.
+- Aquí (y en /db) está TODO el acceso a MongoDB del corte. Servicios, endpoints y pantallas
+  no usan pymongo ni colecciones.
 - Los repositorios consultan y guardan; NO deciden reglas de negocio (eso es de la semana 2).
-- No hacen commit/rollback: la transacción la controla `unidad_de_trabajo()`.
+- No confirman ni abortan: la transacción la controla `unidad_de_trabajo()` / `en_transaccion()`.
+- En la frontera se convierten tipos: date <-> datetime (BSON no tiene fecha sin hora) y
+  Decimal <-> Decimal128 (dinero sin errores de punto flotante).
 """
-from datetime import date
+from datetime import date, datetime, timedelta
+from decimal import Decimal
 
-import psycopg
-from psycopg import errors as pg_errors
+from bson.decimal128 import Decimal128
+from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError, WriteError
 
+from app.persistence.db import UnidadDeTrabajo
 from app.persistence.errors import (
     DatosInvalidosError,
     ReferenciaInexistenteError,
@@ -17,120 +23,161 @@ from app.persistence.errors import (
 )
 from app.persistence.models import Habitacion, Huesped, NuevaReserva, Reserva, TipoHabitacion
 
-_ESTADOS_ACTIVOS = ("CONFIRMADA", "EN_CURSO")
+ESTADOS_ACTIVOS = ["CONFIRMADA", "EN_CURSO"]
+_VALIDACION_FALLIDA = 121  # código de MongoDB: DocumentValidationFailure
+_CENTAVOS = Decimal("0.01")
 
 
-class PgTipoHabitacionRepository:
-    def __init__(self, conn: psycopg.Connection):
-        self._conn = conn
+# ------------------------------------------------------------------ conversiones de frontera
+def a_fecha_bson(d: date) -> datetime:
+    return datetime(d.year, d.month, d.day)
 
+
+def a_dinero_bson(valor: Decimal | int | float) -> Decimal128:
+    return Decimal128(Decimal(str(valor)).quantize(_CENTAVOS))
+
+
+def noches_de(entrada: date, salida: date) -> list[datetime]:
+    """Cada noche ocupada del rango semiabierto [entrada, salida): la salida no cuenta como noche."""
+    return [a_fecha_bson(entrada + timedelta(days=i)) for i in range((salida - entrada).days)]
+
+
+def _dinero(v: Decimal128) -> Decimal:
+    return v.to_decimal()
+
+
+class _Repo:
+    def __init__(self, uow: UnidadDeTrabajo):
+        self._db = uow.db
+        self._s = uow.sesion
+
+
+# ------------------------------------------------------------------ repositorios
+class MongoTipoHabitacionRepository(_Repo):
     def buscar_por_id(self, id_tipo: int) -> TipoHabitacion | None:
-        row = self._conn.execute(
-            "SELECT id_tipo, nombre, capacidad_max, tarifa_noche FROM tipo_habitacion WHERE id_tipo = %s",
-            (id_tipo,),
-        ).fetchone()
-        return TipoHabitacion(**row) if row else None
+        d = self._db.tipos_habitacion.find_one({"_id": id_tipo}, session=self._s)
+        if not d:
+            return None
+        return TipoHabitacion(d["_id"], d["nombre"], d["capacidad_max"], _dinero(d["tarifa_noche"]))
 
 
-class PgHabitacionRepository:
-    def __init__(self, conn: psycopg.Connection):
-        self._conn = conn
+class MongoHabitacionRepository(_Repo):
+    @staticmethod
+    def _a_modelo(d: dict) -> Habitacion:
+        return Habitacion(d["_id"], d["numero"], d["id_tipo"], d["estado"])
 
     def obtener_por_id(self, id_habitacion: int) -> Habitacion | None:
-        row = self._conn.execute(
-            "SELECT id_habitacion, numero, id_tipo, estado FROM habitacion WHERE id_habitacion = %s",
-            (id_habitacion,),
-        ).fetchone()
-        return Habitacion(**row) if row else None
+        d = self._db.habitaciones.find_one({"_id": id_habitacion}, session=self._s)
+        return self._a_modelo(d) if d else None
 
     def buscar_por_tipo(self, id_tipo: int) -> list[Habitacion]:
-        rows = self._conn.execute(
-            "SELECT id_habitacion, numero, id_tipo, estado FROM habitacion WHERE id_tipo = %s ORDER BY numero",
-            (id_tipo,),
-        ).fetchall()
-        return [Habitacion(**r) for r in rows]
+        cur = self._db.habitaciones.find({"id_tipo": id_tipo}, session=self._s).sort("numero", 1)
+        return [self._a_modelo(d) for d in cur]
 
     def buscar_libres_por_tipo_y_rango(self, id_tipo: int, entrada: date, salida: date) -> list[Habitacion]:
         # Solape de [e1,s1) y [e2,s2) <=> e1 < s2 AND s1 > e2 (la salida no cuenta como noche).
-        rows = self._conn.execute(
-            """
-            SELECT h.id_habitacion, h.numero, h.id_tipo, h.estado
-            FROM habitacion h
-            WHERE h.id_tipo = %(tipo)s
-              AND NOT EXISTS (
-                  SELECT 1 FROM reserva r
-                  WHERE r.id_habitacion = h.id_habitacion
-                    AND r.estado = ANY(%(activos)s)
-                    AND r.fecha_entrada < %(salida)s
-                    AND r.fecha_salida  > %(entrada)s)
-            ORDER BY h.numero
-            """,
-            {"tipo": id_tipo, "entrada": entrada, "salida": salida, "activos": list(_ESTADOS_ACTIVOS)},
-        ).fetchall()
-        return [Habitacion(**r) for r in rows]
+        habitaciones = self.buscar_por_tipo(id_tipo)
+        ocupadas = set(
+            self._db.reservas.distinct(
+                "id_habitacion",
+                {
+                    "id_habitacion": {"$in": [h.id_habitacion for h in habitaciones]},
+                    "estado": {"$in": ESTADOS_ACTIVOS},
+                    "fecha_entrada": {"$lt": a_fecha_bson(salida)},
+                    "fecha_salida": {"$gt": a_fecha_bson(entrada)},
+                },
+                session=self._s,
+            )
+        )
+        return [h for h in habitaciones if h.id_habitacion not in ocupadas]
 
 
-class PgHuespedRepository:
-    def __init__(self, conn: psycopg.Connection):
-        self._conn = conn
-
+class MongoHuespedRepository(_Repo):
     def obtener_por_id(self, id_huesped: int) -> Huesped | None:
-        row = self._conn.execute(
-            """SELECT id_huesped, nombre, documento, nacionalidad, telefono, correo
-               FROM huesped WHERE id_huesped = %s""",
-            (id_huesped,),
-        ).fetchone()
-        return Huesped(**row) if row else None
+        d = self._db.huespedes.find_one({"_id": id_huesped}, session=self._s)
+        if not d:
+            return None
+        return Huesped(d["_id"], d["nombre"], d["documento"], d.get("nacionalidad"), d.get("telefono"), d.get("correo"))
 
 
-class PgReservaRepository:
-    _COLUMNAS = """id_reserva, id_huesped, id_habitacion, fecha_entrada, fecha_salida,
-                   numero_personas, tarifa_noche, total, estado, creada_en"""
-
-    def __init__(self, conn: psycopg.Connection):
-        self._conn = conn
+class MongoReservaRepository(_Repo):
+    @staticmethod
+    def _a_modelo(d: dict) -> Reserva:
+        return Reserva(
+            id_reserva=d["_id"],
+            id_huesped=d["id_huesped"],
+            id_habitacion=d["id_habitacion"],
+            fecha_entrada=d["fecha_entrada"].date(),
+            fecha_salida=d["fecha_salida"].date(),
+            numero_personas=d["numero_personas"],
+            tarifa_noche=_dinero(d["tarifa_noche"]),
+            total=_dinero(d["total"]),
+            estado=d["estado"],
+            creada_en=d["creada_en"],
+        )
 
     def buscar_reservas_solapadas(self, id_habitacion: int, entrada: date, salida: date) -> list[Reserva]:
-        rows = self._conn.execute(
-            f"""SELECT {self._COLUMNAS} FROM reserva
-                WHERE id_habitacion = %s AND estado = ANY(%s)
-                  AND fecha_entrada < %s AND fecha_salida > %s
-                ORDER BY fecha_entrada""",
-            (id_habitacion, list(_ESTADOS_ACTIVOS), salida, entrada),
-        ).fetchall()
-        return [Reserva(**r) for r in rows]
+        cur = self._db.reservas.find(
+            {
+                "id_habitacion": id_habitacion,
+                "estado": {"$in": ESTADOS_ACTIVOS},
+                "fecha_entrada": {"$lt": a_fecha_bson(salida)},
+                "fecha_salida": {"$gt": a_fecha_bson(entrada)},
+            },
+            session=self._s,
+        ).sort("fecha_entrada", 1)
+        return [self._a_modelo(d) for d in cur]
+
+    def _siguiente_id(self) -> int:
+        """Id entero consecutivo (contrato de la semana 2). Al estar dentro de la transacción,
+        si esta se aborta el contador también vuelve atrás."""
+        doc = self._db.contadores.find_one_and_update(
+            {"_id": "reserva"},
+            {"$inc": {"valor": 1}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+            session=self._s,
+        )
+        return doc["valor"]
 
     def guardar(self, reserva: NuevaReserva) -> int:
-        """Inserta dentro de un SAVEPOINT: si la BD rechaza la fila, la transacción
-        externa sigue viva y el servicio puede reintentar con otra habitación."""
+        """Inserta la reserva y retorna su id real.
+
+        - Sustituto de las claves foráneas: verifica huésped y habitación en la misma transacción.
+        - El validador de la colección rechaza fechas o valores inválidos (RN-03).
+        - El índice único parcial (id_habitacion, noches) rechaza el solape entre reservas activas (RN-01),
+          incluso con solicitudes simultáneas (RNF-08).
+        En MongoDB un rechazo ABORTA la transacción (no hay SAVEPOINT): para probar otra habitación,
+        el servicio abre una transacción nueva."""
+        if self._db.huespedes.count_documents({"_id": reserva.id_huesped}, limit=1, session=self._s) == 0:
+            raise ReferenciaInexistenteError(f"Huésped {reserva.id_huesped} inexistente")
+        if self._db.habitaciones.count_documents({"_id": reserva.id_habitacion}, limit=1, session=self._s) == 0:
+            raise ReferenciaInexistenteError(f"Habitación {reserva.id_habitacion} inexistente")
+
+        id_reserva = self._siguiente_id()
+        documento = {
+            "_id": id_reserva,
+            "id_huesped": reserva.id_huesped,
+            "id_habitacion": reserva.id_habitacion,
+            "fecha_entrada": a_fecha_bson(reserva.fecha_entrada),
+            "fecha_salida": a_fecha_bson(reserva.fecha_salida),
+            "noches": noches_de(reserva.fecha_entrada, reserva.fecha_salida),
+            "numero_personas": reserva.numero_personas,
+            "tarifa_noche": a_dinero_bson(reserva.tarifa_noche),
+            "total": a_dinero_bson(reserva.total),
+            "estado": reserva.estado,
+            "creada_en": datetime.now().replace(microsecond=0),
+        }
         try:
-            with self._conn.transaction():  # SAVEPOINT anidado
-                row = self._conn.execute(
-                    """INSERT INTO reserva (id_huesped, id_habitacion, fecha_entrada, fecha_salida,
-                                            numero_personas, tarifa_noche, total, estado)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                       RETURNING id_reserva""",
-                    (
-                        reserva.id_huesped,
-                        reserva.id_habitacion,
-                        reserva.fecha_entrada,
-                        reserva.fecha_salida,
-                        reserva.numero_personas,
-                        reserva.tarifa_noche,
-                        reserva.total,
-                        reserva.estado,
-                    ),
-                ).fetchone()
-        except pg_errors.ExclusionViolation as e:
+            self._db.reservas.insert_one(documento, session=self._s)
+        except DuplicateKeyError as e:
             raise SolapeReservaError("La habitación ya tiene una reserva activa en ese rango") from e
-        except pg_errors.ForeignKeyViolation as e:
-            raise ReferenciaInexistenteError("Huésped o habitación inexistente") from e
-        except pg_errors.CheckViolation as e:
-            raise DatosInvalidosError(f"Datos rechazados por la base: {e.diag.constraint_name}") from e
-        return row["id_reserva"]
+        except WriteError as e:
+            if e.code == _VALIDACION_FALLIDA:
+                raise DatosInvalidosError("Datos rechazados por el validador de 'reservas'") from e
+            raise
+        return id_reserva
 
     def buscar_por_id(self, id_reserva: int) -> Reserva | None:
-        row = self._conn.execute(
-            f"SELECT {self._COLUMNAS} FROM reserva WHERE id_reserva = %s", (id_reserva,)
-        ).fetchone()
-        return Reserva(**row) if row else None
+        d = self._db.reservas.find_one({"_id": id_reserva}, session=self._s)
+        return self._a_modelo(d) if d else None

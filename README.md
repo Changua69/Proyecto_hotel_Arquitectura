@@ -11,4 +11,5 @@
 
 ## Semana 13 — Persistencia del corte vertical
 
-Ver [README_SEMANA13.md](README_SEMANA13.md): matriz RF–RNF, esquema PostgreSQL, datos de prueba, repositorios, pruebas y evidencias.
+Requiere MongoDB en modo **replica set** (`rs0`) para las transacciones; los pasos están en la sección 4.
+Ver [README_SEMANA13.md](README_SEMANA13.md): matriz RF–RNF, esquema MongoDB (validadores e índices), datos de prueba, repositorios, pruebas y evidencias.

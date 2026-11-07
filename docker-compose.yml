@@ -1,11 +1,22 @@
-# Base de prueba PostgreSQL 16 (alternativa a instalar PostgreSQL localmente).
-# Uso: docker compose up -d
+# MongoDB 8.0 como replica set de un nodo (necesario para transacciones).
+# Alternativa a convertir la instalación local en replica set.
+# Uso: docker compose up -d   (detenga antes el servicio MongoDB local si usa el puerto 27017)
 services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: marea
-      POSTGRES_PASSWORD: marea_dev   # solo desarrollo
-      POSTGRES_DB: marea_test
+  mongo:
+    image: mongo:8.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     ports:
-      - "5432:5432"
+      - "27017:27017"
+    volumes:
+      - mongo_datos:/data/db
+    healthcheck:
+      # Inicia el replica set la primera vez; después solo comprueba que responde.
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) {
+        rs.initiate({_id: 'rs0', members: [{_id: 0, host: '127.0.0.1:27017'}]}).ok }"
+      interval: 5s
+      timeout: 30s
+      retries: 30
+
+volumes:
+  mongo_datos:

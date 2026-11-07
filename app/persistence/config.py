@@ -1,6 +1,10 @@
-"""Configuración de la conexión a PostgreSQL.
+"""Configuración de la conexión a MongoDB.
 
-La URL se lee de la variable de entorno DATABASE_URL (o del archivo .env).
+Variables (en el entorno o en el archivo .env):
+  MONGO_URI        URI del servidor. Debe ser un replica set (aunque sea de un solo nodo),
+                   porque las transacciones de MongoDB solo existen en replica sets.
+  MONGO_DB_PRUEBA  Base de la persistencia del corte vertical. Es DISTINTA de `hotel_db`
+                   (la de las rutas heredadas) porque `reset_db` borra y recrea sus colecciones.
 Nunca se escriben credenciales reales en el código.
 """
 import os
@@ -12,8 +16,13 @@ try:  # python-dotenv es opcional
 except ImportError:  # pragma: no cover
     pass
 
-DEFAULT_URL = "postgresql://marea:marea_dev@localhost:5432/marea_test"
+DEFAULT_URI = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
+DEFAULT_DB = "marea_test"
 
 
-def database_url() -> str:
-    return os.getenv("DATABASE_URL", DEFAULT_URL)
+def mongo_uri() -> str:
+    return os.getenv("MONGO_URI", DEFAULT_URI)
+
+
+def nombre_base() -> str:
+    return os.getenv("MONGO_DB_PRUEBA", DEFAULT_DB)

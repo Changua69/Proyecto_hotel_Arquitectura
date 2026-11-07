@@ -1,1 +1,1 @@
-"""Capa de persistencia del corte vertical (PostgreSQL)."""
+"""Capa de persistencia del corte vertical (MongoDB)."""

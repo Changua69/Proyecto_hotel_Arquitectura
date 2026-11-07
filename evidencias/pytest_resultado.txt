@@ -1,24 +1,25 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/juan-da/Codigos/Proyecto-master/venv/bin/python
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python3
 cachedir: .pytest_cache
-rootdir: /home/juan-da/Codigos/Proyecto-master
+rootdir: /home/claude/proyecto
 configfile: pytest.ini
-plugins: anyio-4.16.0
-collecting ... collected 14 items
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 15 items
 
-tests/test_persistencia.py::test_datos_iniciales_conteos_por_tipo PASSED [  7%]
-tests/test_persistencia.py::test_tipo_y_huesped_existentes_e_inexistentes PASSED [ 14%]
-tests/test_persistencia.py::test_rf02_suite_301_no_aparece_si_esta_reservada PASSED [ 21%]
-tests/test_persistencia.py::test_rf02_rango_contiguo_no_cuenta_como_solape PASSED [ 28%]
-tests/test_persistencia.py::test_rf02_tipo_sin_reservas_devuelve_todas PASSED [ 35%]
-tests/test_persistencia.py::test_rf04_guardar_y_recuperar_desde_conexion_nueva PASSED [ 42%]
-tests/test_persistencia.py::test_rf04_id_inexistente_devuelve_none PASSED [ 50%]
-tests/test_persistencia.py::test_rf04_buscar_reservas_solapadas PASSED   [ 57%]
-tests/test_persistencia.py::test_integridad_exclusion_rechaza_solape PASSED [ 64%]
-tests/test_persistencia.py::test_integridad_check_fechas PASSED          [ 71%]
-tests/test_persistencia.py::test_integridad_fk_huesped_inexistente PASSED [ 78%]
-tests/test_persistencia.py::test_rnf03_error_en_transaccion_no_deja_datos_parciales PASSED [ 85%]
-tests/test_persistencia.py::test_rnf03_savepoint_permite_reintentar_con_otra_habitacion PASSED [ 92%]
+tests/test_persistencia.py::test_datos_iniciales_conteos_por_tipo PASSED [  6%]
+tests/test_persistencia.py::test_tipo_y_huesped_existentes_e_inexistentes PASSED [ 13%]
+tests/test_persistencia.py::test_rf02_suite_301_no_aparece_si_esta_reservada PASSED [ 20%]
+tests/test_persistencia.py::test_rf02_rango_contiguo_no_cuenta_como_solape PASSED [ 26%]
+tests/test_persistencia.py::test_rf02_tipo_sin_reservas_devuelve_todas PASSED [ 33%]
+tests/test_persistencia.py::test_rf04_guardar_y_recuperar_desde_conexion_nueva PASSED [ 40%]
+tests/test_persistencia.py::test_rf04_id_inexistente_devuelve_none PASSED [ 46%]
+tests/test_persistencia.py::test_rf04_buscar_reservas_solapadas PASSED   [ 53%]
+tests/test_persistencia.py::test_integridad_indice_unico_rechaza_solape PASSED [ 60%]
+tests/test_persistencia.py::test_integridad_validador_fechas PASSED      [ 66%]
+tests/test_persistencia.py::test_integridad_huesped_inexistente PASSED   [ 73%]
+tests/test_persistencia.py::test_integridad_habitacion_inexistente PASSED [ 80%]
+tests/test_persistencia.py::test_rnf03_error_en_transaccion_no_deja_datos_parciales PASSED [ 86%]
+tests/test_persistencia.py::test_rnf03_rechazo_aborta_y_se_reintenta_en_transaccion_nueva PASSED [ 93%]
 tests/test_persistencia.py::test_rnf08_diez_solicitudes_simultaneas_una_sola_reserva PASSED [100%]
 
-============================== 14 passed in 1.04s ==============================
+============================== 15 passed in 1.55s ==============================

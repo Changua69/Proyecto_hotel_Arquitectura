@@ -1,5 +1,5 @@
 1) Suites libres 21-22 dic: ['302', '303', '304']
 2) Reserva guardada id=4 habitación=201 total=600000.00
-3) Recuperada desde conexión nueva: id=4 estado=CONFIRMADA 2026-12-20->2026-12-23 total=600000.00
+3) Recuperada desde un cliente nuevo: id=4 estado=CONFIRMADA 2026-12-20->2026-12-23 total=600000.00
 4) Reserva 999999: None
 5) Solape rechazado por la BD: La habitación ya tiene una reserva activa en ese rango

@@ -1,9 +1,9 @@
-"""Errores de persistencia traducidos desde PostgreSQL.
+"""Errores de persistencia traducidos desde MongoDB.
 
 El servicio (semana 2) los convierte en errores de negocio / códigos HTTP:
-  SolapeReservaError        -> 409 SIN_DISPONIBILIDAD (o reintento con otra habitación)
+  SolapeReservaError         -> 409 SIN_DISPONIBILIDAD (o reintento con otra habitación)
   ReferenciaInexistenteError -> 404 NO_ENCONTRADO
-  DatosInvalidosError       -> 400 FECHAS_INVALIDAS / datos inválidos
+  DatosInvalidosError        -> 400 FECHAS_INVALIDAS / datos inválidos
 """
 
 
@@ -12,12 +12,13 @@ class PersistenciaError(Exception):
 
 
 class SolapeReservaError(PersistenciaError):
-    """La restricción de exclusión rechazó una reserva solapada (RN-01)."""
+    """El índice único de noches ocupadas rechazó una reserva solapada (RN-01)."""
 
 
 class ReferenciaInexistenteError(PersistenciaError):
-    """Clave foránea inválida: huésped o habitación inexistente (RN-05)."""
+    """Huésped o habitación inexistente (RN-05). MongoDB no tiene claves foráneas:
+    el repositorio lo verifica dentro de la misma transacción."""
 
 
 class DatosInvalidosError(PersistenciaError):
-    """Una restricción CHECK rechazó los datos (p. ej. salida <= entrada, RN-03)."""
+    """El validador de la colección rechazó el documento (p. ej. salida <= entrada, RN-03)."""
