@@ -1,0 +1,8 @@
+OK: no hay acceso a MongoDB fuera de app/persistence en el código del corte (0 hallazgos)
+PENDIENTE semana 2 (6 archivos heredados con acceso directo a MongoDB):
+  - app/database.py
+  - app/init_rooms.py
+  - app/routes/auth.py
+  - app/routes/dashboard.py
+  - app/routes/reservations.py
+  - app/routes/rooms.py
