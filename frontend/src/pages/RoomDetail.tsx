@@ -195,11 +195,6 @@ const navbar: CSSProperties = {
   justifyContent: "space-between", alignItems: "center",
   height: "56px", width: "100%", boxSizing: "border-box"
 }
-const logoBox: CSSProperties = {
-  width: "32px", height: "32px", background: "#2563eb",
-  borderRadius: "6px", display: "flex",
-  alignItems: "center", justifyContent: "center"
-}
 const backBtn: CSSProperties = {
   padding: "6px 14px", border: "1px solid #eee",
   borderRadius: "6px", background: "transparent",

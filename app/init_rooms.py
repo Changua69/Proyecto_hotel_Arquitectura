@@ -1,12 +1,11 @@
+"""Crea las habitaciones iniciales sin borrar ni sobrescribir datos existentes."""
 from app.database import rooms_collection
 
+
 def init_rooms():
-
-    rooms_collection.delete_many({})
-
     rooms = []
 
-    # ESTÁNDAR
+    # HABITACIONES ESTÁNDAR
     for i in range(1, 9):
         rooms.append({
             "number": i,
@@ -17,7 +16,7 @@ def init_rooms():
             "services": ["wifi", "tv"],
             "images": [
                 f"https://picsum.photos/300/200?random={i}",
-                f"https://picsum.photos/300/200?random={i+50}"
+                f"https://picsum.photos/300/200?random={i + 50}"
             ],
             "capacity": 2,
             "floor": 1,
@@ -27,7 +26,7 @@ def init_rooms():
             "beds": "1 cama doble"
         })
 
-    # FAMILIAR
+    # HABITACIONES FAMILIARES
     for i in range(9, 17):
         rooms.append({
             "number": i,
@@ -38,7 +37,7 @@ def init_rooms():
             "services": ["wifi", "tv", "aire acondicionado"],
             "images": [
                 f"https://picsum.photos/300/200?random={i}",
-                f"https://picsum.photos/300/200?random={i+50}"
+                f"https://picsum.photos/300/200?random={i + 50}"
             ],
             "capacity": 4,
             "floor": 2,
@@ -48,7 +47,7 @@ def init_rooms():
             "beds": "2 camas dobles"
         })
 
-    # SUITE
+    # SUITES
     for i in range(17, 25):
         rooms.append({
             "number": i,
@@ -59,7 +58,7 @@ def init_rooms():
             "services": ["wifi", "tv", "aire acondicionado", "jacuzzi"],
             "images": [
                 f"https://picsum.photos/300/200?random={i}",
-                f"https://picsum.photos/300/200?random={i+50}"
+                f"https://picsum.photos/300/200?random={i + 50}"
             ],
             "capacity": 2,
             "floor": 3,
@@ -69,4 +68,11 @@ def init_rooms():
             "beds": "1 cama king"
         })
 
-    rooms_collection.insert_many(rooms)
+    # Solo inserta las habitaciones que todavía no existen.
+    # No modifica reservas, estados, precios ni datos que ya estén guardados.
+    for room in rooms:
+        rooms_collection.update_one(
+            {"number": room["number"]},
+            {"$setOnInsert": room},
+            upsert=True
+        )
