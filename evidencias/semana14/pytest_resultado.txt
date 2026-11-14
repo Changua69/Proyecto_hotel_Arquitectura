@@ -1,0 +1,3746 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/juan-da/Codigos/Proyecto-master/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/juan-da/Codigos/Proyecto-master
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.16.0
+collecting ... collected 64 items
+
+tests/test_api.py::test_rf04_valido_201_y_se_recupera_desde_otra_conexion ERROR [  1%]
+tests/test_api.py::test_rf04_rechazo_409_sin_disponibilidad_no_cambia_registros ERROR [  3%]
+tests/test_api.py::test_rf04_capacidad_excedida_422 ERROR                [  4%]
+tests/test_api.py::test_rf04_fechas_invalidas_400[salida-antes] ERROR    [  6%]
+tests/test_api.py::test_rf04_fechas_invalidas_400[mismo-dia] ERROR       [  7%]
+tests/test_api.py::test_rf04_fechas_invalidas_400[en-el-pasado] ERROR    [  9%]
+tests/test_api.py::test_rf04_huesped_inexistente_404_sin_registro_huerfano ERROR [ 10%]
+tests/test_api.py::test_rf04_tipo_inexistente_404 ERROR                  [ 12%]
+tests/test_api.py::test_rf04_entrada_mal_formada_400[falta-campo] ERROR  [ 14%]
+tests/test_api.py::test_rf04_entrada_mal_formada_400[fecha-mal-formada] ERROR [ 15%]
+tests/test_api.py::test_rf04_entrada_mal_formada_400[personas-cero] ERROR [ 17%]
+tests/test_api.py::test_rf04_entrada_mal_formada_400[campo-desconocido] ERROR [ 18%]
+tests/test_api.py::test_rf04_inicio_el_dia_de_salida_de_otra_se_permite ERROR [ 20%]
+tests/test_api.py::test_rf04_consultar_por_id_200_no_modifica ERROR      [ 21%]
+tests/test_api.py::test_rf04_consultar_id_inexistente_404_y_api_sigue_disponible ERROR [ 23%]
+tests/test_api.py::test_rf04_consultar_id_invalido_400[abc] ERROR        [ 25%]
+tests/test_api.py::test_rf04_consultar_id_invalido_400[0] ERROR          [ 26%]
+tests/test_api.py::test_rf04_consultar_id_invalido_400[-3] ERROR         [ 28%]
+tests/test_api.py::test_rf04_consultar_id_invalido_400[1.5] ERROR        [ 29%]
+tests/test_api.py::test_rf02_valido_suites_21_22 ERROR                   [ 31%]
+tests/test_api.py::test_rf02_refleja_reserva_recien_creada ERROR         [ 32%]
+tests/test_api.py::test_rf02_sin_habitaciones_200_lista_vacia ERROR      [ 34%]
+tests/test_api.py::test_rf02_tipo_inexistente_404 ERROR                  [ 35%]
+tests/test_api.py::test_rf02_capacidad_excedida_422 ERROR                [ 37%]
+tests/test_api.py::test_rf02_fechas_invalidas_400 ERROR                  [ 39%]
+tests/test_api.py::test_rf02_parametro_faltante_o_mal_formado_400 ERROR  [ 40%]
+tests/test_api.py::test_rf02_consultar_no_modifica_datos ERROR           [ 42%]
+tests/test_api.py::test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales ERROR [ 43%]
+tests/test_api.py::test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite ERROR [ 45%]
+tests/test_api_errores.py::test_base_no_disponible_503_controlado PASSED [ 46%]
+tests/test_api_errores.py::test_fallo_inesperado_500_sin_detalles_tecnicos PASSED [ 48%]
+tests/test_api_errores.py::test_cors_permite_el_origen_de_vite PASSED    [ 50%]
+tests/test_persistencia.py::test_datos_iniciales_conteos_por_tipo ERROR  [ 51%]
+tests/test_persistencia.py::test_tipo_y_huesped_existentes_e_inexistentes ERROR [ 53%]
+tests/test_persistencia.py::test_rf02_suite_301_no_aparece_si_esta_reservada 
+
+==================================== ERRORS ====================================
+___ ERROR at setup of test_rf04_valido_201_y_se_recupera_desde_otra_conexion ___
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_valido_201_y_se_recupera_desde_otra_conexion>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8caee2a9c3f32a2d912a5, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8caee2a9c3f32a2d912a5, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_ ERROR at setup of test_rf04_rechazo_409_sin_disponibilidad_no_cambia_registros _
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_rechazo_409_sin_disponibilidad_no_cambia_registros>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8caf32a9c3f32a2d912a6, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8caf32a9c3f32a2d912a6, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+______________ ERROR at setup of test_rf04_capacidad_excedida_422 ______________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_capacidad_excedida_422>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8caf82a9c3f32a2d912a7, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8caf82a9c3f32a2d912a7, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+________ ERROR at setup of test_rf04_fechas_invalidas_400[salida-antes] ________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_fechas_invalidas_400[salida-antes]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cafd2a9c3f32a2d912a8, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cafd2a9c3f32a2d912a8, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_________ ERROR at setup of test_rf04_fechas_invalidas_400[mismo-dia] __________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_fechas_invalidas_400[mismo-dia]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb022a9c3f32a2d912a9, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb022a9c3f32a2d912a9, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+________ ERROR at setup of test_rf04_fechas_invalidas_400[en-el-pasado] ________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_fechas_invalidas_400[en-el-pasado]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb072a9c3f32a2d912aa, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb072a9c3f32a2d912aa, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+__ ERROR at setup of test_rf04_huesped_inexistente_404_sin_registro_huerfano ___
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_huesped_inexistente_404_sin_registro_huerfano>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb0c2a9c3f32a2d912ab, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb0c2a9c3f32a2d912ab, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______________ ERROR at setup of test_rf04_tipo_inexistente_404 _______________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_tipo_inexistente_404>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb112a9c3f32a2d912ac, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb112a9c3f32a2d912ac, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______ ERROR at setup of test_rf04_entrada_mal_formada_400[falta-campo] _______
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_entrada_mal_formada_400[falta-campo]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb172a9c3f32a2d912ad, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb172a9c3f32a2d912ad, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+____ ERROR at setup of test_rf04_entrada_mal_formada_400[fecha-mal-formada] ____
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_entrada_mal_formada_400[fecha-mal-formada]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb1c2a9c3f32a2d912ae, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb1c2a9c3f32a2d912ae, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+______ ERROR at setup of test_rf04_entrada_mal_formada_400[personas-cero] ______
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_entrada_mal_formada_400[personas-cero]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb212a9c3f32a2d912af, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb212a9c3f32a2d912af, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+____ ERROR at setup of test_rf04_entrada_mal_formada_400[campo-desconocido] ____
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_entrada_mal_formada_400[campo-desconocido]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb262a9c3f32a2d912b0, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb262a9c3f32a2d912b0, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+____ ERROR at setup of test_rf04_inicio_el_dia_de_salida_de_otra_se_permite ____
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_inicio_el_dia_de_salida_de_otra_se_permite>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb2b2a9c3f32a2d912b1, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb2b2a9c3f32a2d912b1, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_________ ERROR at setup of test_rf04_consultar_por_id_200_no_modifica _________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_por_id_200_no_modifica>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb302a9c3f32a2d912b2, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb302a9c3f32a2d912b2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_ ERROR at setup of test_rf04_consultar_id_inexistente_404_y_api_sigue_disponible _
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_id_inexistente_404_y_api_sigue_disponible>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb352a9c3f32a2d912b3, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb352a9c3f32a2d912b3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+__________ ERROR at setup of test_rf04_consultar_id_invalido_400[abc] __________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_id_invalido_400[abc]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb3a2a9c3f32a2d912b4, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb3a2a9c3f32a2d912b4, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+___________ ERROR at setup of test_rf04_consultar_id_invalido_400[0] ___________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_id_invalido_400[0]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb3f2a9c3f32a2d912b5, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb3f2a9c3f32a2d912b5, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+__________ ERROR at setup of test_rf04_consultar_id_invalido_400[-3] ___________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_id_invalido_400[-3]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb442a9c3f32a2d912b6, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb442a9c3f32a2d912b6, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+__________ ERROR at setup of test_rf04_consultar_id_invalido_400[1.5] __________
+
+request = <SubRequest 'base_limpia' for <Function test_rf04_consultar_id_invalido_400[1.5]>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb492a9c3f32a2d912b7, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb492a9c3f32a2d912b7, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______________ ERROR at setup of test_rf02_valido_suites_21_22 ________________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_valido_suites_21_22>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb4e2a9c3f32a2d912b8, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb4e2a9c3f32a2d912b8, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+__________ ERROR at setup of test_rf02_refleja_reserva_recien_creada ___________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_refleja_reserva_recien_creada>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb532a9c3f32a2d912b9, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb532a9c3f32a2d912b9, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_________ ERROR at setup of test_rf02_sin_habitaciones_200_lista_vacia _________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_sin_habitaciones_200_lista_vacia>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb592a9c3f32a2d912ba, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb592a9c3f32a2d912ba, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______________ ERROR at setup of test_rf02_tipo_inexistente_404 _______________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_tipo_inexistente_404>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb5e2a9c3f32a2d912bb, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb5e2a9c3f32a2d912bb, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+______________ ERROR at setup of test_rf02_capacidad_excedida_422 ______________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_capacidad_excedida_422>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb632a9c3f32a2d912bc, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb632a9c3f32a2d912bc, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______________ ERROR at setup of test_rf02_fechas_invalidas_400 _______________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_fechas_invalidas_400>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb682a9c3f32a2d912bd, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb682a9c3f32a2d912bd, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______ ERROR at setup of test_rf02_parametro_faltante_o_mal_formado_400 _______
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_parametro_faltante_o_mal_formado_400>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb6d2a9c3f32a2d912be, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb6d2a9c3f32a2d912be, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+___________ ERROR at setup of test_rf02_consultar_no_modifica_datos ____________
+
+request = <SubRequest 'base_limpia' for <Function test_rf02_consultar_no_modifica_datos>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb722a9c3f32a2d912bf, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb722a9c3f32a2d912bf, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_ ERROR at setup of test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales _
+
+request = <SubRequest 'base_limpia' for <Function test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb772a9c3f32a2d912c0, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb772a9c3f32a2d912c0, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_ ERROR at setup of test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite _
+
+request = <SubRequest 'base_limpia' for <Function test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb7c2a9c3f32a2d912c1, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb7c2a9c3f32a2d912c1, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+___________ ERROR at setup of test_datos_iniciales_conteos_por_tipo ____________
+
+request = <SubRequest 'base_limpia' for <Function test_datos_iniciales_conteos_por_tipo>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb812a9c3f32a2d912c2, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb812a9c3f32a2d912c2, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+_______ ERROR at setup of test_tipo_y_huesped_existentes_e_inexistentes ________
+
+request = <SubRequest 'base_limpia' for <Function test_tipo_y_huesped_existentes_e_inexistentes>>
+
+    @pytest.fixture(autouse=True)
+    def base_limpia(request):
+        """Cada prueba con base real arranca desde el estado inicial conocido
+        (db/esquema.py + db/datos_prueba.py).
+    
+        Las pruebas marcadas `sin_base` (servicios aislados, RNF-06) no tocan MongoDB:
+        para ellas no se reinicia nada y cualquier intento de conexión falla."""
+        if request.node.get_closest_marker("sin_base"):
+            import pymongo
+    
+            def _prohibido(*args, **kwargs):
+                raise AssertionError("Una prueba aislada intentó abrir una conexión real a MongoDB")
+    
+            mp = pytest.MonkeyPatch()
+            mp.setattr(pymongo.MongoClient, "__init__", _prohibido)
+            mp.setattr("app.persistence.db._cliente", None)  # ni siquiera el cliente compartido
+            yield
+            mp.undo()
+            return
+    
+        from scripts.reset_db import reset
+    
+>       reset(verbose=False)
+
+tests/conftest.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/reset_db.py:18: in reset
+    db = base()
+         ^^^^^^
+app/persistence/db.py:68: in base
+    return cliente()[nombre_base()]
+           ^^^^^^^^^
+app/persistence/db.py:63: in cliente
+    _cliente = _crear_cliente()
+               ^^^^^^^^^^^^^^^^
+app/persistence/db.py:50: in _crear_cliente
+    if "setName" not in cliente.admin.command("hello"):
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/database.py:946: in command
+    return self._client._retryable_read(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2116: in _retryable_read
+    return self._retry_internal(
+venv/lib/python3.12/site-packages/pymongo/_csot.py:126: in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2077: in _retry_internal
+    ).run()
+      ^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:2947: in run
+    res = self._read() if self._is_read else self._write()
+          ^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3175: in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:3120: in _get_server
+    return self._client._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py:1917: in _select_server
+    server = topology.select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:357: in select_server
+    server = self._select_server(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:331: in _select_server
+    servers = self.select_servers(
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:249: in select_servers
+    server_descriptions = self._select_servers_loop(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Topology <TopologyDescription id: 6af8cb862a9c3f32a2d912c3, topology_type: Unknown, servers: [<ServerDescription ('12...17: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>>
+selector = Primary(), timeout = 5.0, operation = 'hello', operation_id = None
+address = None, deprioritized_servers = None
+
+    def _select_servers_loop(
+        self,
+        selector: Callable[[Selection], Selection],
+        timeout: float,
+        operation: str,
+        operation_id: Optional[int],
+        address: Optional[_Address],
+        deprioritized_servers: Optional[list[Server]] = None,
+    ) -> list[ServerDescription]:
+        """select_servers() guts. Hold the lock when calling this."""
+        now = time.monotonic()
+        end_time = now + timeout
+        logged_waiting = False
+        # Server selection does not have APM events, gate only on logging
+        ss: Optional[_ServerSelectionTelemetry] = None
+        if _is_debug_enabled(_SERVER_SELECTION_LOGGER):
+            ss = _ServerSelectionTelemetry(
+                self._topology_id, selector, operation, operation_id, self.description
+            )
+            ss.started()
+    
+        server_descriptions = self._description.apply_selector(
+            selector,
+            address,
+            custom_selector=self._settings.server_selector,
+            deprioritized_servers=[server.description for server in deprioritized_servers]
+            if deprioritized_servers
+            else None,
+        )
+    
+        while not server_descriptions:
+            # No suitable servers.
+            if timeout == 0 or now > end_time:
+                if ss is not None:
+                    ss.failed(self._error_message(selector), self.description)
+>               raise ServerSelectionTimeoutError(
+                    f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
+                )
+E               pymongo.errors.ServerSelectionTimeoutError: 127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 5.0s, Topology Description: <TopologyDescription id: 6af8cb862a9c3f32a2d912c3, topology_type: Unknown, servers: [<ServerDescription ('127.0.0.1', 27017) server_type: Unknown, rtt: None, error=AutoReconnect('127.0.0.1:27017: [Errno 111] Connection refused (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
+
+venv/lib/python3.12/site-packages/pymongo/synchronous/topology.py:297: ServerSelectionTimeoutError
+=============================== warnings summary ===============================
+venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/juan-da/Codigos/Proyecto-master/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_api.py::test_rf04_valido_201_y_se_recupera_desde_otra_conexion
+ERROR tests/test_api.py::test_rf04_rechazo_409_sin_disponibilidad_no_cambia_registros
+ERROR tests/test_api.py::test_rf04_capacidad_excedida_422 - pymongo.errors.Se...
+ERROR tests/test_api.py::test_rf04_fechas_invalidas_400[salida-antes] - pymon...
+ERROR tests/test_api.py::test_rf04_fechas_invalidas_400[mismo-dia] - pymongo....
+ERROR tests/test_api.py::test_rf04_fechas_invalidas_400[en-el-pasado] - pymon...
+ERROR tests/test_api.py::test_rf04_huesped_inexistente_404_sin_registro_huerfano
+ERROR tests/test_api.py::test_rf04_tipo_inexistente_404 - pymongo.errors.Serv...
+ERROR tests/test_api.py::test_rf04_entrada_mal_formada_400[falta-campo] - pym...
+ERROR tests/test_api.py::test_rf04_entrada_mal_formada_400[fecha-mal-formada]
+ERROR tests/test_api.py::test_rf04_entrada_mal_formada_400[personas-cero] - p...
+ERROR tests/test_api.py::test_rf04_entrada_mal_formada_400[campo-desconocido]
+ERROR tests/test_api.py::test_rf04_inicio_el_dia_de_salida_de_otra_se_permite
+ERROR tests/test_api.py::test_rf04_consultar_por_id_200_no_modifica - pymongo...
+ERROR tests/test_api.py::test_rf04_consultar_id_inexistente_404_y_api_sigue_disponible
+ERROR tests/test_api.py::test_rf04_consultar_id_invalido_400[abc] - pymongo.e...
+ERROR tests/test_api.py::test_rf04_consultar_id_invalido_400[0] - pymongo.err...
+ERROR tests/test_api.py::test_rf04_consultar_id_invalido_400[-3] - pymongo.er...
+ERROR tests/test_api.py::test_rf04_consultar_id_invalido_400[1.5] - pymongo.e...
+ERROR tests/test_api.py::test_rf02_valido_suites_21_22 - pymongo.errors.Serve...
+ERROR tests/test_api.py::test_rf02_refleja_reserva_recien_creada - pymongo.er...
+ERROR tests/test_api.py::test_rf02_sin_habitaciones_200_lista_vacia - pymongo...
+ERROR tests/test_api.py::test_rf02_tipo_inexistente_404 - pymongo.errors.Serv...
+ERROR tests/test_api.py::test_rf02_capacidad_excedida_422 - pymongo.errors.Se...
+ERROR tests/test_api.py::test_rf02_fechas_invalidas_400 - pymongo.errors.Serv...
+ERROR tests/test_api.py::test_rf02_parametro_faltante_o_mal_formado_400 - pym...
+ERROR tests/test_api.py::test_rf02_consultar_no_modifica_datos - pymongo.erro...
+ERROR tests/test_api.py::test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales
+ERROR tests/test_api.py::test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite
+ERROR tests/test_persistencia.py::test_datos_iniciales_conteos_por_tipo - pym...
+ERROR tests/test_persistencia.py::test_tipo_y_huesped_existentes_e_inexistentes
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/usr/lib/python3.12/threading.py:359: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+============= 3 passed, 1 warning, 31 errors in 161.49s (0:02:41) ==============
