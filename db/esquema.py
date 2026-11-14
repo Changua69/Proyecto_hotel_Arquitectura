@@ -3,7 +3,8 @@
 MongoDB no exige esquema, así que las reglas de integridad se declaran aquí:
 - Validadores $jsonSchema por colección (equivalen a NOT NULL, tipos y CHECK).
 - $expr en `reservas`: fecha_salida > fecha_entrada (RN-03).
-- Índices únicos (equivalen a UNIQUE).
+- Índices únicos (equivalen a UNIQUE): nombre de tipo, número de habitación, documento y
+  correo del huésped (este último sin distinguir mayúsculas).
 - Índice único PARCIAL y multiclave sobre (id_habitacion, noches) solo para reservas activas:
   dos reservas CONFIRMADA/EN_CURSO de la misma habitación no pueden compartir una noche (RN-01).
   Es el equivalente de la restricción de exclusión y funciona también con solicitudes simultáneas.
@@ -12,6 +13,7 @@ MongoDB no exige esquema, así que las reglas de integridad se declaran aquí:
 Es idempotente: `crear_esquema` borra y recrea las colecciones del corte.
 """
 from pymongo import ASCENDING
+from pymongo.collation import Collation
 from pymongo.database import Database
 
 COLECCIONES = ("tipos_habitacion", "habitaciones", "huespedes", "reservas", "contadores")
@@ -122,6 +124,15 @@ def crear_esquema(db: Database) -> None:
     db.habitaciones.create_index("numero", unique=True, name="ux_habitacion_numero")
     db.habitaciones.create_index("id_tipo", name="ix_habitacion_tipo")
     db.huespedes.create_index("documento", unique=True, name="ux_huesped_documento")
+    # Un correo no puede repetirse entre huéspedes, sin distinguir mayúsculas.
+    # Solo aplica cuando hay correo: varios huéspedes pueden no tenerlo (null).
+    db.huespedes.create_index(
+        "correo",
+        unique=True,
+        collation=Collation(locale="en", strength=2),
+        partialFilterExpression={"correo": {"$type": "string"}},
+        name="ux_huesped_correo",
+    )
     db.reservas.create_index(
         [("id_habitacion", ASCENDING), ("fecha_entrada", ASCENDING), ("fecha_salida", ASCENDING)],
         name="ix_reserva_habitacion_fechas",

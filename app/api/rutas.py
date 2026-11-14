@@ -14,7 +14,8 @@ from datetime import date
 from fastapi import APIRouter, Depends, Path, Query, Response
 
 from app.api.esquemas import DisponibilidadSalida, ErrorSalida, ReservaEntrada, ReservaSalida
-from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios
+from app.persistence.config import nombre_base
+from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios, comprobar_conexion
 from app.services.reservas import (
     ConsultarDisponibilidadService,
     ConsultarReservaService,
@@ -108,3 +109,10 @@ def consultar_reserva(
     servicio: ConsultarReservaService = Depends(servicio_consulta),
 ):
     return ReservaSalida.desde(servicio.consultar(id_reserva))
+
+
+# ------------------------------------------------------------------ estado
+@router.get("/salud", summary="Estado de la API y de la base", responses=_errores(503))
+def salud():
+    comprobar_conexion()  # 503 BD_NO_DISPONIBLE si MongoDB no responde
+    return {"estado": "ok", "base": nombre_base()}

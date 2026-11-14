@@ -14,8 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errores import registrar_manejadores
 from app.api.rutas import router
-from app.persistence.config import nombre_base
-from app.persistence.proveedor import comprobar_conexion
 
 ORIGENES_POR_DEFECTO = "http://localhost:5173,http://127.0.0.1:5173"  # Vite (pantalla de la semana 15)
 
@@ -45,11 +43,6 @@ def crear_app() -> FastAPI:
         expose_headers=["Location"],
     )
     registrar_corte(app)
-
-    @app.get("/api/salud", tags=["Corte vertical: Crear una reserva"], summary="Estado de la API y de la base")
-    def salud():
-        comprobar_conexion()  # 503 BD_NO_DISPONIBLE si MongoDB no responde
-        return {"estado": "ok", "base": nombre_base()}
 
     _openapi_sin_422_por_defecto(app)
     return app

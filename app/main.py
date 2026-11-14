@@ -28,3 +28,4 @@ def root():
 @app.on_event("startup")
 def startup_event():
     init_rooms()
+    auth.asegurar_email_unico()  # no se repiten correos de usuarios

@@ -8,8 +8,8 @@ persistencia probada en la semana 13 (`README_SEMANA13.md`), los dos RF prioriza
 API**: tienen servicios con las reglas RN-01 a RN-05, contratos documentados, pruebas funcionales con
 MongoDB real y los RNF verificados hasta donde lo permite la API.
 
-**Resultado:** 64 pruebas pasan: 15 de persistencia, 29 funcionales por API contra MongoDB real y 20
-aisladas sin base de datos (17 de servicios y 3 de errores y CORS). RNF-01 medido por HTTP con 10 usuarios concurrentes: **p95 = 40 ms**,
+**Resultado:** 69 pruebas pasan: 15 de persistencia, 29 funcionales por API contra MongoDB real,
+20 aisladas sin base de datos (17 de servicios y 3 de errores y CORS) y 5 de correos únicos (sección 8). RNF-01 medido por HTTP con 10 usuarios concurrentes: **p95 = 38 ms**,
 con una meta de 2 000 ms.
 
 ```
@@ -197,7 +197,7 @@ del corte**: la API del corte no las usa y `verificar_capas` las lista aparte.
 
 El caso exitoso cambia los datos, así que cada prueba arranca desde una base recién creada.
 
-**Resultado obtenido:** las 64 pruebas pasan (`evidencias/semana14/pytest_resultado.txt`). En
+**Resultado obtenido:** las 69 pruebas pasan (`evidencias/semana14/pytest_resultado.txt`). En
 todos los escenarios de la tabla, lo obtenido coincide con lo esperado.
 
 | RF | Escenario | Pasos | Resultado esperado | Prueba |
@@ -232,7 +232,7 @@ de la semana 13.
 
 | RF / RNF | Calidad ISO/IEC 25010:2023 | Escenario y meta | Resultado observado | Estado | Evidencia |
 |---|---|---|---|---|---|
-| RF-02, RF-04 / **RNF-01** | Eficiencia de desempeño / comportamiento temporal | 10 usuarios concurrentes × 20 consultas `GET /api/disponibilidad` (200 solicitudes) con 5 003 reservas en la base. Se mide la respuesta HTTP completa desde el cliente. Meta: **p95 ≤ 2 000 ms** y todas 200. | p95 **40 ms**, máximo 52 ms, promedio 26 ms; 200 de 200 respondieron 200. Referencia: 20 consultas consecutivas de un cliente, máximo 4,9 ms. | **Cumple** en el entorno de desarrollo. Se repite en el equipo del grupo antes de entregar. La creación (POST) no forma parte de este escenario: su tiempo se observará desde la pantalla en la semana 15. | `evidencias/semana14/rnf01_api.json` · `python -m scripts.medir_api` |
+| RF-02, RF-04 / **RNF-01** | Eficiencia de desempeño / comportamiento temporal | 10 usuarios concurrentes × 20 consultas `GET /api/disponibilidad` (200 solicitudes) con 5 003 reservas en la base. Se mide la respuesta HTTP completa desde el cliente. Meta: **p95 ≤ 2 000 ms** y todas 200. | p95 **38 ms**, máximo 69 ms, promedio 28 ms; 200 de 200 respondieron 200. Referencia: 20 consultas consecutivas de un cliente, máximo 11,9 ms. | **Cumple**, medido en el equipo del grupo (Python 3.12, MongoDB 8.0.34). La creación (POST) no forma parte de este escenario: su tiempo se observará desde la pantalla en la semana 15. | `evidencias/semana14/rnf01_api.json` · `python -m scripts.medir_api` |
 | RF-04 / **RNF-03** | Fiabilidad / tolerancia a fallos | Por API, se provoca un fallo **después** de guardar y antes de confirmar. Meta: 0 documentos parciales, contador sin avanzar y respuesta controlada. | 500 `ERROR_INTERNO` con mensaje genérico; 0 documentos nuevos; contador igual; el detalle técnico no se envía al cliente. | **Cumple** | `test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales` |
 | RF-02, RF-04 / **RNF-06** | Mantenibilidad / modularidad y capacidad para ser probado | Servicios con repositorios **simulados**, con `MongoClient` bloqueado (cualquier conexión hace fallar la prueba). Comprobaciones: registro válido, sin disponibilidad, capacidad, huésped inexistente, fechas, reintento, consulta existente, consulta ausente e id inválido, más RF-02 (válida, vacía, tipo, capacidad, fechas). En los rechazos **no se invoca `guardar`** y las consultas **solo leen**. Meta: todas pasan sin conexión real y hay 0 accesos a MongoDB fuera de la capa de persistencia. | 20 pruebas aisladas pasan (17 de servicios y 3 de errores de la API y CORS); 0 hallazgos de acceso a MongoDB fuera de `app/persistence`. | **Cumple** | `tests/test_servicios_aislados.py` · `evidencias/semana14/rnf06_servicios_aislados.txt` · `evidencias/semana14/verificar_capas.txt` |
 | RF-04 / **RNF-08** | Fiabilidad / ausencia de fallos | 10 `POST /api/reservas` simultáneos por la **única** Suite libre (CA-07). Meta: exactamente 1 respuesta 201, 9 respuestas 409 y 1 sola reserva activa. | 1 × 201, 9 × 409, 1 reserva activa. | **Cumple a nivel de API.** **Pendiente semana 15:** repetirlo de extremo a extremo desde la pantalla. | `test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite` |
@@ -277,7 +277,7 @@ python -m scripts.reset_db                   # base de prueba con su estado inic
 uvicorn app.api.app:app --reload --port 8000 # API del corte → http://127.0.0.1:8000/docs
 
 # en otra terminal, con el venv activo:
-pytest -v                                    # 64 pruebas (persistencia, API, aisladas)
+pytest -v                                    # 69 pruebas (persistencia, API, aisladas, correos)
 pytest -v -m sin_base                        # solo las 20 aisladas de RNF-06
 python -m scripts.demo_api                   # ejemplos de contrato → evidencias/semana14/
 python -m scripts.medir_api                  # RNF-01 por HTTP → evidencias/semana14/rnf01_api.json
@@ -355,3 +355,30 @@ Los dos integrantes deben poder explicar ambos RF.
   - **RNF-08** de extremo a extremo (CA-07 desde la pantalla);
   - el tiempo de creación observado desde la interfaz (RNF-01);
   - los escenarios CA-01 a CA-07 recorridos desde la pantalla.
+
+---
+
+## 8. Correos que no se repiten
+
+| Dónde | Cómo se impide | Respuesta |
+|---|---|---|
+| Registro de usuarios del login (`POST /register`, ruta heredada, base `hotel_db`) | Antes de guardar se busca el correo **sin distinguir mayúsculas ni espacios** (`Ana@Correo.com ` = `ana@correo.com`). Además hay un **índice único** `ux_usuario_email`, que se crea al arrancar `app/main.py` y frena también dos registros simultáneos. Los correos nuevos se guardan en minúsculas. | **409** `{"detail": "Ya existe una cuenta con ese correo."}` (antes era 400). El login también acepta el correo con cualquier combinación de mayúsculas. |
+| Pantalla de registro (`frontend/src/pages/Login.tsx`) | Muestra el mensaje real del backend en lugar de “Error al registrar”. | El usuario ve “Ya existe una cuenta con ese correo.” |
+| Huéspedes del corte (`marea_test.huespedes`) | Índice único `ux_huesped_correo`, sin distinguir mayúsculas. Solo aplica si el huésped tiene correo: varios pueden no tenerlo. | La base rechaza el documento repetido. |
+
+**Pruebas** (`tests/test_correos_unicos.py`):
+- huésped con correo repetido en otras mayúsculas: rechazado;
+- varios huéspedes sin correo: permitidos;
+- registro repetido: 409 y un solo usuario en la base;
+- login con el correo en mayúsculas: funciona;
+- 5 registros simultáneos con el mismo correo: 1 respuesta 201 y 4 respuestas 409.
+
+Las pruebas del registro usan la colección `marea_test.usuarios_prueba`, nunca `hotel_db`. Si no están
+instaladas las dependencias del login (`instaladores.txt`), esas 3 pruebas se **omiten** (`skipped`).
+
+**Si la base `hotel_db` ya tiene correos repetidos de antes,** MongoDB no puede crear el índice único:
+lo avisa en el registro del servidor y la verificación del registro sigue funcionando. Para crear el
+índice, primero hay que borrar los duplicados.
+
+**Corrección relacionada:** `passlib` (usado para cifrar contraseñas) no funciona con `bcrypt` 5.0. El
+registro respondía 500 antes de llegar a guardar. Se fijó `bcrypt==4.0.1` en `instaladores.txt`.
