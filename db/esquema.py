@@ -93,6 +93,24 @@ VALIDADORES = {
 }
 
 
+def esquema_listo(db: Database) -> bool:
+    """True si ya existen las colecciones del corte y el índice contra solapes."""
+    existentes = set(db.list_collection_names())
+    if not set(COLECCIONES) <= existentes:
+        return False
+    return "ux_reserva_sin_solape" in db.reservas.index_information()
+
+
+def vaciar_colecciones(db: Database) -> None:
+    """Borra solo los DOCUMENTOS, conservando colecciones, validadores e índices.
+
+    Se usa entre pruebas en lugar de `crear_esquema`: borrar y recrear colecciones deja
+    archivos de WiredTiger pendientes de eliminar y, tras cientos de reinicios seguidos,
+    MongoDB puede agotar el límite de archivos abiertos ("Too many open files")."""
+    for nombre in COLECCIONES:
+        db[nombre].delete_many({})
+
+
 def crear_esquema(db: Database) -> None:
     for nombre in COLECCIONES:
         db.drop_collection(nombre)

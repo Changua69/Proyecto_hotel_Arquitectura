@@ -43,7 +43,7 @@ GET /api/disponibilidad?id_tipo=1&fecha_entrada=2026-12-20&fecha_salida=2026-12-
 ```
 
 ```http
-HTTP 422 Unprocessable Content
+HTTP 422 Unprocessable Entity
 
 {
   "detail": "El tipo Estándar admite como máximo 2 personas.",

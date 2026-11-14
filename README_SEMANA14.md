@@ -9,7 +9,7 @@ API**: tienen servicios con las reglas RN-01 a RN-05, contratos documentados, pr
 MongoDB real y los RNF verificados hasta donde lo permite la API.
 
 **Resultado:** 64 pruebas pasan: 15 de persistencia, 29 funcionales por API contra MongoDB real y 20
-aisladas sin base de datos (17 de servicios y 3 de errores y CORS). RNF-01 medido por HTTP con 10 usuarios concurrentes: **p95 = 51 ms**,
+aisladas sin base de datos (17 de servicios y 3 de errores y CORS). RNF-01 medido por HTTP con 10 usuarios concurrentes: **p95 = 40 ms**,
 con una meta de 2 000 ms.
 
 ```
@@ -232,7 +232,7 @@ de la semana 13.
 
 | RF / RNF | Calidad ISO/IEC 25010:2023 | Escenario y meta | Resultado observado | Estado | Evidencia |
 |---|---|---|---|---|---|
-| RF-02, RF-04 / **RNF-01** | Eficiencia de desempeño / comportamiento temporal | 10 usuarios concurrentes × 20 consultas `GET /api/disponibilidad` (200 solicitudes) con 5 003 reservas en la base. Se mide la respuesta HTTP completa desde el cliente. Meta: **p95 ≤ 2 000 ms** y todas 200. | p95 **51 ms**, máximo 62 ms, promedio 35 ms; 200 de 200 respondieron 200. Referencia: 20 consultas consecutivas de un cliente, máximo 6,5 ms. | **Cumple** en el entorno de desarrollo. Se repite en el equipo del grupo antes de entregar. La creación (POST) no forma parte de este escenario: su tiempo se observará desde la pantalla en la semana 15. | `evidencias/semana14/rnf01_api.json` · `python -m scripts.medir_api` |
+| RF-02, RF-04 / **RNF-01** | Eficiencia de desempeño / comportamiento temporal | 10 usuarios concurrentes × 20 consultas `GET /api/disponibilidad` (200 solicitudes) con 5 003 reservas en la base. Se mide la respuesta HTTP completa desde el cliente. Meta: **p95 ≤ 2 000 ms** y todas 200. | p95 **40 ms**, máximo 52 ms, promedio 26 ms; 200 de 200 respondieron 200. Referencia: 20 consultas consecutivas de un cliente, máximo 4,9 ms. | **Cumple** en el entorno de desarrollo. Se repite en el equipo del grupo antes de entregar. La creación (POST) no forma parte de este escenario: su tiempo se observará desde la pantalla en la semana 15. | `evidencias/semana14/rnf01_api.json` · `python -m scripts.medir_api` |
 | RF-04 / **RNF-03** | Fiabilidad / tolerancia a fallos | Por API, se provoca un fallo **después** de guardar y antes de confirmar. Meta: 0 documentos parciales, contador sin avanzar y respuesta controlada. | 500 `ERROR_INTERNO` con mensaje genérico; 0 documentos nuevos; contador igual; el detalle técnico no se envía al cliente. | **Cumple** | `test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciales` |
 | RF-02, RF-04 / **RNF-06** | Mantenibilidad / modularidad y capacidad para ser probado | Servicios con repositorios **simulados**, con `MongoClient` bloqueado (cualquier conexión hace fallar la prueba). Comprobaciones: registro válido, sin disponibilidad, capacidad, huésped inexistente, fechas, reintento, consulta existente, consulta ausente e id inválido, más RF-02 (válida, vacía, tipo, capacidad, fechas). En los rechazos **no se invoca `guardar`** y las consultas **solo leen**. Meta: todas pasan sin conexión real y hay 0 accesos a MongoDB fuera de la capa de persistencia. | 20 pruebas aisladas pasan (17 de servicios y 3 de errores de la API y CORS); 0 hallazgos de acceso a MongoDB fuera de `app/persistence`. | **Cumple** | `tests/test_servicios_aislados.py` · `evidencias/semana14/rnf06_servicios_aislados.txt` · `evidencias/semana14/verificar_capas.txt` |
 | RF-04 / **RNF-08** | Fiabilidad / ausencia de fallos | 10 `POST /api/reservas` simultáneos por la **única** Suite libre (CA-07). Meta: exactamente 1 respuesta 201, 9 respuestas 409 y 1 sola reserva activa. | 1 × 201, 9 × 409, 1 reserva activa. | **Cumple a nivel de API.** **Pendiente semana 15:** repetirlo de extremo a extremo desde la pantalla. | `test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite` |
@@ -289,6 +289,27 @@ cada caso. `medir_api` y `demo_api` restauran la base al terminar.
 
 `app.api.app` levanta **solo el corte** y no necesita las dependencias de las rutas heredadas.
 `app/main.py` (la aplicación heredada más el corte) requiere además lo de `instaladores.txt`.
+
+### Hallazgo: MongoDB se cerraba a mitad de las pruebas
+
+**Qué pasó:** en el equipo del grupo, la primera corrida completa falló a la mitad. MongoDB se cerró
+con `Too many open files` y `WT_PANIC`; el registro está en `docker logs proyecto-master-mongo-1`.
+
+**Causa:** antes de cada prueba, `reset_db` borraba y recreaba las colecciones y sus índices. MongoDB
+no elimina de inmediato los archivos de lo borrado, así que se acumularon cientos (más de 1 500 en
+la carpeta de datos). El contenedor alcanzó su límite de archivos abiertos.
+
+**Corrección:**
+1. `docker-compose.yml` sube el límite a 64 000 (`ulimits.nofile`, el valor que recomienda MongoDB)
+   y reinicia el contenedor si se cae (`restart: unless-stopped`).
+2. Las pruebas recrean el esquema **una sola vez** por corrida y, entre una prueba y otra, solo
+   vacían y recargan los documentos (`reset(completo=False)`).
+
+**Resultado:** cada corrida completa deja unos 16 archivos nuevos en vez de cientos, y tarda menos.
+`python -m scripts.reset_db` sigue recreando todo.
+
+Después de cambiar `docker-compose.yml` hay que volver a crear el contenedor:
+`docker compose up -d --force-recreate`.
 
 ---
 
