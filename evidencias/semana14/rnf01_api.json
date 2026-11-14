@@ -8,39 +8,39 @@
     200
   ],
   "todas_200": true,
-  "p95_ms": 48.3,
-  "max_ms": 68.45,
-  "promedio_ms": 31.46,
-  "solicitudes_por_segundo": 252.5,
+  "p95_ms": 37.52,
+  "max_ms": 68.62,
+  "promedio_ms": 27.59,
+  "solicitudes_por_segundo": 280.2,
   "umbral_p95_ms": 2000,
   "cumple": true,
   "referencia_20_consecutivas": {
     "tiempos_ms": [
-      7.95,
-      5.77,
-      6.0,
-      7.2,
-      5.61,
-      6.34,
-      7.14,
-      6.75,
-      5.97,
-      5.96,
-      6.91,
-      7.04,
-      5.89,
+      7.1,
+      6.37,
+      6.08,
+      6.86,
+      6.99,
+      6.09,
+      6.94,
+      5.92,
+      6.11,
       5.84,
-      7.0,
-      10.46,
-      6.82,
-      5.85,
-      6.96,
-      6.01
+      5.98,
+      6.2,
+      6.67,
+      6.43,
+      11.92,
+      7.95,
+      6.63,
+      6.25,
+      7.35,
+      7.59
     ],
     "codigos_http": [
       200
     ],
-    "max_ms": 10.46
+    "max_ms": 11.92
   },
   "condiciones": "API y MongoDB en el mismo equipo (localhost); 1 solicitud de calentamiento excluida; sin caché en la API; la caché propia de MongoDB queda activa tras el calentamiento.",
   "entorno": {
@@ -55,747 +55,772 @@
   "detalle": [
     {
       "usuario": 1,
-      "ms": 23.04,
+      "ms": 20.7,
       "http": 200
     },
     {
       "usuario": 1,
-      "ms": 23.68,
+      "ms": 22.33,
       "http": 200
     },
     {
       "usuario": 1,
-      "ms": 23.76,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 24.51,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 24.68,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 25.13,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 25.31,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 26.53,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 27.74,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 29.69,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 32.6,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 33.0,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 33.34,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 35.22,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 35.55,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 36.43,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 37.32,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 38.35,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 45.4,
-      "http": 200
-    },
-    {
-      "usuario": 1,
-      "ms": 52.06,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 19.34,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 22.02,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 24.09,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 24.75,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 24.95,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 25.58,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 28.9,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 28.97,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 29.28,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 29.7,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 29.7,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 30.54,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 30.67,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 30.99,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 32.37,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 33.41,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 37.3,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 42.16,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 44.68,
-      "http": 200
-    },
-    {
-      "usuario": 2,
-      "ms": 68.45,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 19.33,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 19.79,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 20.07,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 25.72,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 25.97,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 27.47,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 27.56,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 28.43,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 29.49,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 30.72,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 31.64,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 32.21,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 32.76,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 32.82,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 34.62,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 34.99,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 36.31,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 38.01,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 40.5,
-      "http": 200
-    },
-    {
-      "usuario": 3,
-      "ms": 67.03,
-      "http": 200
-    },
-    {
-      "usuario": 4,
-      "ms": 19.08,
-      "http": 200
-    },
-    {
-      "usuario": 4,
       "ms": 22.98,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 23.29,
+      "usuario": 1,
+      "ms": 23.6,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 25.38,
+      "usuario": 1,
+      "ms": 23.98,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 26.17,
+      "usuario": 1,
+      "ms": 25.34,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 27.55,
+      "usuario": 1,
+      "ms": 25.6,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 27.8,
+      "usuario": 1,
+      "ms": 25.65,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 27.82,
+      "usuario": 1,
+      "ms": 26.14,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 28.03,
+      "usuario": 1,
+      "ms": 26.67,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 28.04,
+      "usuario": 1,
+      "ms": 26.72,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 30.34,
+      "usuario": 1,
+      "ms": 26.77,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 31.54,
+      "usuario": 1,
+      "ms": 28.39,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 31.97,
+      "usuario": 1,
+      "ms": 28.62,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 32.03,
+      "usuario": 1,
+      "ms": 29.0,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 33.16,
+      "usuario": 1,
+      "ms": 29.54,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 36.23,
+      "usuario": 1,
+      "ms": 29.84,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 37.88,
+      "usuario": 1,
+      "ms": 31.62,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 41.1,
+      "usuario": 1,
+      "ms": 33.63,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 48.3,
+      "usuario": 1,
+      "ms": 47.98,
       "http": 200
     },
     {
-      "usuario": 4,
-      "ms": 54.78,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 22.41,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 23.21,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 24.06,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 24.21,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 26.03,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 26.69,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 26.9,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 27.75,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 27.83,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 28.63,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 29.05,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 29.59,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 30.02,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 30.68,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 31.8,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 32.2,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 33.51,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 36.65,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 38.65,
-      "http": 200
-    },
-    {
-      "usuario": 5,
-      "ms": 64.06,
-      "http": 200
-    },
-    {
-      "usuario": 6,
+      "usuario": 2,
       "ms": 18.86,
       "http": 200
     },
     {
-      "usuario": 6,
-      "ms": 21.99,
+      "usuario": 2,
+      "ms": 20.42,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 20.65,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 21.31,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 21.48,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 22.33,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 22.94,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 23.79,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 24.77,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 26.15,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 26.19,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 27.23,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 27.32,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 27.7,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 28.54,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 28.67,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 34.37,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 35.21,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 35.91,
+      "http": 200
+    },
+    {
+      "usuario": 2,
+      "ms": 38.22,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 20.18,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 20.69,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 20.96,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 23.57,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 24.71,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 24.73,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 25.61,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 25.65,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 25.74,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 26.22,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 27.59,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 27.61,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 27.8,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 29.34,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 30.6,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 30.69,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 31.28,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 31.59,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 32.18,
+      "http": 200
+    },
+    {
+      "usuario": 3,
+      "ms": 48.57,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 20.89,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 22.83,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 23.17,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 23.31,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 23.34,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 23.83,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 23.92,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 25.59,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 25.69,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 26.12,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 26.59,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 26.6,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 26.88,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 28.21,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 29.38,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 29.54,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 29.55,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 29.7,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 32.43,
+      "http": 200
+    },
+    {
+      "usuario": 4,
+      "ms": 58.33,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 17.49,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 18.81,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 22.18,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 22.46,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 23.13,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 24.88,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 25.29,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 25.51,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 25.52,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 25.81,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 26.06,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 26.83,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 28.14,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 28.98,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 31.86,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 32.17,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 33.4,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 34.9,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 35.33,
+      "http": 200
+    },
+    {
+      "usuario": 5,
+      "ms": 44.41,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 23.19,
+      "ms": 20.01,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 23.65,
+      "ms": 21.72,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 23.69,
+      "ms": 21.79,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 24.78,
+      "ms": 23.23,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 25.7,
+      "ms": 23.91,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 27.19,
+      "ms": 24.35,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 27.2,
+      "ms": 25.86,
       "http": 200
     },
     {
       "usuario": 6,
-      "ms": 28.58,
+      "ms": 26.05,
       "http": 200
     },
     {
       "usuario": 6,
+      "ms": 26.36,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 26.89,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 27.45,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 27.73,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 27.89,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 28.73,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 29.67,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 31.08,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 31.22,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 34.74,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 35.08,
+      "http": 200
+    },
+    {
+      "usuario": 6,
+      "ms": 38.81,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 7.16,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 21.21,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 22.38,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 22.86,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 24.48,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 24.77,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 24.79,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 26.66,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 26.82,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 27.25,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 27.77,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 27.9,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 28.04,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 28.14,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 28.16,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 29.04,
+      "http": 200
+    },
+    {
+      "usuario": 7,
+      "ms": 30.08,
+      "http": 200
+    },
+    {
+      "usuario": 7,
       "ms": 32.01,
       "http": 200
     },
     {
-      "usuario": 6,
-      "ms": 34.3,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 34.4,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 34.53,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 34.92,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 35.52,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 35.75,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 43.57,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 44.17,
-      "http": 200
-    },
-    {
-      "usuario": 6,
-      "ms": 60.23,
+      "usuario": 7,
+      "ms": 33.83,
       "http": 200
     },
     {
       "usuario": 7,
-      "ms": 17.14,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 25.13,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 25.16,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 25.91,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 26.35,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 26.87,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 27.21,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 27.46,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 28.8,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 30.47,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 30.53,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 31.34,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 32.21,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 33.57,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 33.71,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 35.31,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 36.27,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 37.51,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 39.16,
-      "http": 200
-    },
-    {
-      "usuario": 7,
-      "ms": 41.55,
+      "ms": 68.62,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 22.91,
+      "ms": 19.56,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 25.05,
+      "ms": 20.81,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 26.17,
+      "ms": 23.41,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 26.43,
+      "ms": 23.99,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 27.02,
+      "ms": 24.66,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 27.99,
+      "ms": 24.85,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 28.09,
+      "ms": 24.98,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 28.44,
+      "ms": 25.79,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 28.56,
+      "ms": 26.51,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 27.51,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 28.17,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 28.95,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 29.1,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 29.14,
       "http": 200
     },
     {
@@ -805,252 +830,227 @@
     },
     {
       "usuario": 8,
-      "ms": 29.49,
+      "ms": 30.13,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 30.43,
+      "ms": 30.82,
       "http": 200
     },
     {
       "usuario": 8,
-      "ms": 33.31,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 33.53,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 33.58,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 34.83,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 37.69,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 37.98,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 48.45,
-      "http": 200
-    },
-    {
-      "usuario": 8,
-      "ms": 48.47,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 23.02,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 23.39,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 24.83,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 26.93,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 27.9,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 27.95,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 29.94,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 30.8,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 30.84,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 30.99,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 31.1,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 31.63,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 32.54,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 32.92,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 33.97,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 34.43,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 35.84,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 36.75,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 41.62,
-      "http": 200
-    },
-    {
-      "usuario": 9,
-      "ms": 48.95,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 20.3,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 21.74,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 25.09,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 26.02,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 26.05,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 27.89,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 27.97,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 28.64,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 28.77,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 29.23,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 30.77,
-      "http": 200
-    },
-    {
-      "usuario": 10,
-      "ms": 30.86,
-      "http": 200
-    },
-    {
-      "usuario": 10,
       "ms": 31.42,
       "http": 200
     },
     {
-      "usuario": 10,
-      "ms": 31.74,
+      "usuario": 8,
+      "ms": 31.81,
+      "http": 200
+    },
+    {
+      "usuario": 8,
+      "ms": 47.21,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 18.56,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 18.93,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 19.53,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 22.09,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 23.33,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 25.55,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 26.58,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 26.71,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 26.96,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 27.17,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 27.46,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 28.22,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 28.63,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 29.14,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 29.3,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 32.29,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 32.41,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 35.62,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 37.52,
+      "http": 200
+    },
+    {
+      "usuario": 9,
+      "ms": 41.19,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 33.38,
+      "ms": 21.96,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 34.84,
+      "ms": 22.79,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 34.99,
+      "ms": 23.64,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 35.55,
+      "ms": 23.89,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 37.96,
+      "ms": 23.97,
       "http": 200
     },
     {
       "usuario": 10,
-      "ms": 55.0,
+      "ms": 24.17,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 24.79,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 24.81,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 24.89,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 25.14,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 25.44,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 25.53,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 25.93,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 27.41,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 27.95,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 28.93,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 30.0,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 32.37,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 33.64,
+      "http": 200
+    },
+    {
+      "usuario": 10,
+      "ms": 39.45,
       "http": 200
     }
   ]
