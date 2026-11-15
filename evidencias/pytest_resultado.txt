@@ -4,6 +4,10 @@ cachedir: .pytest_cache
 rootdir: /home/claude/proyecto
 configfile: pytest.ini
 plugins: platformdirs-4.13.5, anyio-4.15.1
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/juan-da/Codigos/Proyecto-master/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/juan-da/Codigos/Proyecto-master
+configfile: pytest.ini
 collecting ... collected 15 items
 
 tests/test_persistencia.py::test_datos_iniciales_conteos_por_tipo PASSED [  6%]
@@ -23,3 +27,4 @@ tests/test_persistencia.py::test_rnf03_rechazo_aborta_y_se_reintenta_en_transacc
 tests/test_persistencia.py::test_rnf08_diez_solicitudes_simultaneas_una_sola_reserva PASSED [100%]
 
 ============================== 15 passed in 1.55s ==============================
+============================== 15 passed in 2.84s ==============================

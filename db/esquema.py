@@ -3,8 +3,10 @@
 MongoDB no exige esquema, así que las reglas de integridad se declaran aquí:
 - Validadores $jsonSchema por colección (equivalen a NOT NULL, tipos y CHECK).
 - $expr en `reservas`: fecha_salida > fecha_entrada (RN-03).
+
 - Índices únicos (equivalen a UNIQUE): nombre de tipo, número de habitación, documento y
   correo del huésped (este último sin distinguir mayúsculas).
+- Índices únicos (equivalen a UNIQUE).
 - Índice único PARCIAL y multiclave sobre (id_habitacion, noches) solo para reservas activas:
   dos reservas CONFIRMADA/EN_CURSO de la misma habitación no pueden compartir una noche (RN-01).
   Es el equivalente de la restricción de exclusión y funciona también con solicitudes simultáneas.
@@ -112,7 +114,7 @@ def vaciar_colecciones(db: Database) -> None:
     for nombre in COLECCIONES:
         db[nombre].delete_many({})
 
-
+        
 def crear_esquema(db: Database) -> None:
     for nombre in COLECCIONES:
         db.drop_collection(nombre)
