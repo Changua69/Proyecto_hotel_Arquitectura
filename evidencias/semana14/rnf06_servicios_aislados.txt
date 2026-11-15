@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/juan-da/Codigos/Proyecto-master/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/juan-da/Codigos/Proyecto-master
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.16.0
+collecting ... collected 64 items / 44 deselected / 20 selected
+
+tests/test_api_errores.py::test_base_no_disponible_503_controlado PASSED [  5%]
+tests/test_api_errores.py::test_fallo_inesperado_500_sin_detalles_tecnicos PASSED [ 10%]
+tests/test_api_errores.py::test_cors_permite_el_origen_de_vite PASSED    [ 15%]
+tests/test_servicios_aislados.py::test_rf04_registro_valido_asigna_menor_numero_y_calcula_total PASSED [ 20%]
+tests/test_servicios_aislados.py::test_rf04_sin_disponibilidad_no_invoca_guardar PASSED [ 25%]
+tests/test_servicios_aislados.py::test_rf04_capacidad_excedida_no_invoca_guardar PASSED [ 30%]
+tests/test_servicios_aislados.py::test_rf04_huesped_inexistente_no_invoca_guardar PASSED [ 35%]
+tests/test_servicios_aislados.py::test_rf04_fechas_invalidas_no_tocan_repositorios[salida-antes] PASSED [ 40%]
+tests/test_servicios_aislados.py::test_rf04_fechas_invalidas_no_tocan_repositorios[mismo-dia] PASSED [ 45%]
+tests/test_servicios_aislados.py::test_rf04_fechas_invalidas_no_tocan_repositorios[entrada-en-el-pasado] PASSED [ 50%]
+tests/test_servicios_aislados.py::test_rf04_si_otra_solicitud_toma_la_habitacion_reintenta_con_la_siguiente PASSED [ 55%]
+tests/test_servicios_aislados.py::test_consultar_reserva_existente_solo_lee PASSED [ 60%]
+tests/test_servicios_aislados.py::test_consultar_reserva_ausente PASSED  [ 65%]
+tests/test_servicios_aislados.py::test_consultar_reserva_id_no_positivo[0] PASSED [ 70%]
+tests/test_servicios_aislados.py::test_consultar_reserva_id_no_positivo[-5] PASSED [ 75%]
+tests/test_servicios_aislados.py::test_rf02_consulta_valida_solo_lee PASSED [ 80%]
+tests/test_servicios_aislados.py::test_rf02_sin_habitaciones_devuelve_lista_vacia PASSED [ 85%]
+tests/test_servicios_aislados.py::test_rf02_tipo_inexistente PASSED      [ 90%]
+tests/test_servicios_aislados.py::test_rf02_capacidad_excedida PASSED    [ 95%]
+tests/test_servicios_aislados.py::test_rf02_fechas_invalidas_no_tocan_repositorios PASSED [100%]
+
+=============================== warnings summary ===============================
+venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/juan-da/Codigos/Proyecto-master/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 20 passed, 44 deselected, 1 warning in 0.42s =================

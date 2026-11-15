@@ -3,6 +3,9 @@
 MongoDB no exige esquema, así que las reglas de integridad se declaran aquí:
 - Validadores $jsonSchema por colección (equivalen a NOT NULL, tipos y CHECK).
 - $expr en `reservas`: fecha_salida > fecha_entrada (RN-03).
+
+- Índices únicos (equivalen a UNIQUE): nombre de tipo, número de habitación, documento y
+  correo del huésped (este último sin distinguir mayúsculas).
 - Índices únicos (equivalen a UNIQUE).
 - Índice único PARCIAL y multiclave sobre (id_habitacion, noches) solo para reservas activas:
   dos reservas CONFIRMADA/EN_CURSO de la misma habitación no pueden compartir una noche (RN-01).
@@ -12,6 +15,7 @@ MongoDB no exige esquema, así que las reglas de integridad se declaran aquí:
 Es idempotente: `crear_esquema` borra y recrea las colecciones del corte.
 """
 from pymongo import ASCENDING
+from pymongo.collation import Collation
 from pymongo.database import Database
 
 COLECCIONES = ("tipos_habitacion", "habitaciones", "huespedes", "reservas", "contadores")
@@ -93,6 +97,24 @@ VALIDADORES = {
 }
 
 
+def esquema_listo(db: Database) -> bool:
+    """True si ya existen las colecciones del corte y el índice contra solapes."""
+    existentes = set(db.list_collection_names())
+    if not set(COLECCIONES) <= existentes:
+        return False
+    return "ux_reserva_sin_solape" in db.reservas.index_information()
+
+
+def vaciar_colecciones(db: Database) -> None:
+    """Borra solo los DOCUMENTOS, conservando colecciones, validadores e índices.
+
+    Se usa entre pruebas en lugar de `crear_esquema`: borrar y recrear colecciones deja
+    archivos de WiredTiger pendientes de eliminar y, tras cientos de reinicios seguidos,
+    MongoDB puede agotar el límite de archivos abiertos ("Too many open files")."""
+    for nombre in COLECCIONES:
+        db[nombre].delete_many({})
+
+        
 def crear_esquema(db: Database) -> None:
     for nombre in COLECCIONES:
         db.drop_collection(nombre)
@@ -104,6 +126,15 @@ def crear_esquema(db: Database) -> None:
     db.habitaciones.create_index("numero", unique=True, name="ux_habitacion_numero")
     db.habitaciones.create_index("id_tipo", name="ix_habitacion_tipo")
     db.huespedes.create_index("documento", unique=True, name="ux_huesped_documento")
+    # Un correo no puede repetirse entre huéspedes, sin distinguir mayúsculas.
+    # Solo aplica cuando hay correo: varios huéspedes pueden no tenerlo (null).
+    db.huespedes.create_index(
+        "correo",
+        unique=True,
+        collation=Collation(locale="en", strength=2),
+        partialFilterExpression={"correo": {"$type": "string"}},
+        name="ux_huesped_correo",
+    )
     db.reservas.create_index(
         [("id_habitacion", ASCENDING), ("fecha_entrada", ASCENDING), ("fecha_salida", ASCENDING)],
         name="ix_reserva_habitacion_fechas",

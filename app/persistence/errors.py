@@ -10,6 +10,9 @@ El servicio (semana 2) los convierte en errores de negocio / códigos HTTP:
 class PersistenciaError(Exception):
     """Error base de la capa de persistencia."""
 
+class BaseNoDisponibleError(PersistenciaError):
+    """No hay conexión con MongoDB (servidor apagado, sin replica set o sin red).
+    Se traduce aquí para que servicios y API no dependan de las excepciones de pymongo."""
 
 class SolapeReservaError(PersistenciaError):
     """El índice único de noches ocupadas rechazó una reserva solapada (RN-01)."""

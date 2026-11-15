@@ -6,8 +6,13 @@ Busca acceso directo a MongoDB (pymongo, bson, MongoClient, colecciones u operac
 como find/insert_one/aggregate) fuera de app/persistence/ y db/. Resultado esperado: 0 hallazgos.
 
 Las rutas heredadas (app/routes, app/database.py, app/init_rooms.py) todavía usan MongoDB
+
+directamente. Desde la semana 14 el corte usa su propia API (app/api -> app/services ->
+app/persistence) y no depende de ellas; se listan aparte como FUERA DEL CORTE. No se ocultan.
+
 directamente: se listan aparte como PENDIENTES porque se reemplazan en la semana 2 por
 endpoints que llaman a los servicios. No se ocultan.
+
 """
 import re
 import sys
@@ -46,7 +51,11 @@ def main() -> int:
     else:
         print("OK: no hay acceso a MongoDB fuera de app/persistence en el código del corte (0 hallazgos)")
     if heredados:
+
+        print(f"FUERA DEL CORTE ({len(heredados)} archivos heredados con acceso directo a MongoDB; la API del corte no los usa):")
+
         print(f"PENDIENTE semana 2 ({len(heredados)} archivos heredados con acceso directo a MongoDB):")
+
         print("\n".join(f"  - {h}" for h in sorted(heredados)))
     return 1 if hallazgos else 0
 

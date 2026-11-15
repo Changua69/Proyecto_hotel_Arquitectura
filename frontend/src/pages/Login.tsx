@@ -75,6 +75,9 @@ function Login() {
 
       setTab("login")
     } catch (error: any) {
+      // Muestra el motivo real del backend, p. ej. "Ya existe una cuenta con ese correo." (409)
+      const detalle = error.response?.data?.detail
+      toast.error(typeof detalle === "string" ? detalle : (error.response ? "Error al registrar" : "Error de conexión"))
       const message = error.response?.data?.detail
         || (error.response ? "No fue posible registrar el usuario" : "No se pudo conectar con el servidor")
       toast.error(message)
