@@ -13,6 +13,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errores import registrar_manejadores
+from app.api.gestion import router as router_gestion
+from app.api.huespedes import router as router_huespedes
 from app.api.rutas import router
 
 ORIGENES_POR_DEFECTO = "http://localhost:5173,http://127.0.0.1:5173"  # Vite (pantalla de la semana 15)
@@ -25,6 +27,8 @@ def origenes_cors() -> list[str]:
 def registrar_corte(app: FastAPI) -> None:
     """Agrega las rutas y el manejo de errores del corte a una aplicación existente."""
     app.include_router(router)
+    app.include_router(router_huespedes)  # semana 15
+    app.include_router(router_gestion)    # semana 15: panel, administración y reportes
     registrar_manejadores(app)
 
 
@@ -38,9 +42,9 @@ def crear_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origenes_cors(),
-        allow_methods=["GET", "POST"],
-        allow_headers=["Content-Type"],
-        expose_headers=["Location"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Location", "Content-Disposition"],
     )
     registrar_corte(app)
 

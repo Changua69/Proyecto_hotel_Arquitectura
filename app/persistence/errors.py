@@ -23,5 +23,14 @@ class ReferenciaInexistenteError(PersistenciaError):
     el repositorio lo verifica dentro de la misma transacción."""
 
 
+class DuplicadoError(PersistenciaError):
+    """Un índice único rechazó el documento (p. ej. documento o correo de huésped repetido).
+    `campo` dice cuál: el servicio lo devuelve para que la pantalla marque ese campo."""
+
+    def __init__(self, campo: str):
+        super().__init__(f"Valor repetido en el campo {campo}")
+        self.campo = campo
+
+
 class DatosInvalidosError(PersistenciaError):
     """El validador de la colección rechazó el documento (p. ej. salida <= entrada, RN-03)."""

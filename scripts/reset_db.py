@@ -14,7 +14,6 @@ import json
 
 from app.persistence.db import base
 from db.datos_prueba import cargar_datos, verificacion
-
 from db.esquema import crear_esquema, esquema_listo, vaciar_colecciones
 
 
@@ -26,16 +25,6 @@ def reset(verbose: bool = True, completo: bool = True) -> None:
             print(f"[ok] esquema: colecciones, validadores e índices en '{db.name}'")
     else:
         vaciar_colecciones(db)
-
-from db.esquema import crear_esquema
-
-
-def reset(verbose: bool = True) -> None:
-    db = base()
-    crear_esquema(db)
-    if verbose:
-        print(f"[ok] esquema: colecciones, validadores e índices en '{db.name}'")
-        
     cargar_datos(db)
     if verbose:
         print("[ok] datos de prueba")

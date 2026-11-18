@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Callable, Iterator, Protocol, TypeVar
 
-from app.persistence.contracts import HabitacionRepo, HuespedRepo, ReservaRepo, TipoHabitacionRepo
+from app.persistence.contracts import GestionRepo, HabitacionRepo, HuespedRepo, ReservaRepo, TipoHabitacionRepo
 from app.persistence.errors import BaseNoDisponibleError
 
 T = TypeVar("T")
@@ -28,6 +28,7 @@ class Repositorios:
     habitaciones: HabitacionRepo
     huespedes: HuespedRepo
     reservas: ReservaRepo
+    gestion: GestionRepo | None = None  # semana 15: panel, administración y reportes
 
 
 class ProveedorRepositorios(Protocol):
@@ -42,6 +43,7 @@ class MongoProveedor:
     @staticmethod
     def _repos(uow) -> Repositorios:
         from app.persistence.repositories import (
+            MongoGestionRepository,
             MongoHabitacionRepository,
             MongoHuespedRepository,
             MongoReservaRepository,
@@ -53,6 +55,7 @@ class MongoProveedor:
             habitaciones=MongoHabitacionRepository(uow),
             huespedes=MongoHuespedRepository(uow),
             reservas=MongoReservaRepository(uow),
+            gestion=MongoGestionRepository(uow),
         )
 
     def leer(self, fn: Callable[[Repositorios], T]) -> T:

@@ -1,4 +1,11 @@
+import os
+
 import pytest
+
+# jwt_handler exige SECRET_KEY al importarse. Para las pruebas basta un valor de ejemplo
+# (no es una credencial real). Si ya existe en el entorno o en .env, se respeta.
+if not os.environ.get("SECRET_KEY"):
+    os.environ["SECRET_KEY"] = "clave-solo-para-pruebas"
 
 
 @pytest.fixture(scope="session")
@@ -34,11 +41,4 @@ def base_limpia(request):
 
     request.getfixturevalue("esquema_recreado")
     reset(verbose=False, completo=False)
-from scripts.reset_db import reset
-
-
-@pytest.fixture(autouse=True)
-def base_limpia():
-    """Cada prueba arranca desde el estado inicial conocido (db/esquema.py + db/datos_prueba.py)."""
-    reset(verbose=False)
     yield

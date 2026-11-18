@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.api import rutas
 from app.api.app import crear_app
+from app.auth.jwt_handler import create_access_token
 from app.persistence.errors import BaseNoDisponibleError
 
 pytestmark = pytest.mark.sin_base
@@ -28,7 +29,8 @@ class ProveedorQueFalla:
 def cliente_con(error: Exception) -> TestClient:
     app = crear_app()
     app.dependency_overrides[rutas.proveedor] = lambda: ProveedorQueFalla(error)
-    return TestClient(app, raise_server_exceptions=False)
+    token = create_access_token({"sub": "recepcion@marea.test", "role": "recepcionista"})
+    return TestClient(app, raise_server_exceptions=False, headers={"Authorization": f"Bearer {token}"})
 
 
 RESERVA = {"id_huesped": 1, "id_tipo": 2, "fecha_entrada": "2026-12-20", "fecha_salida": "2026-12-23", "numero_personas": 3}

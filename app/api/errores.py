@@ -1,6 +1,7 @@
 """Manejo centralizado de errores de la API del corte (semana 14).
 
-- Errores de negocio  -> su HTTP (400/404/409/422) con {"detail", "codigo"}.
+- Errores de negocio  -> su HTTP (400/401/403/404/409/422) con {"detail", "codigo"}
+                         y, si aplica, "campo" o "errores" para marcar el formulario.
 - Entrada inválida    -> 400 DATOS_INVALIDOS (FastAPI usaría 422, pero 422 ya significa
                          CAPACIDAD_EXCEDIDA en nuestro contrato; así se distinguen).
 - Base no disponible  -> 503 BD_NO_DISPONIBLE.
@@ -29,6 +30,10 @@ _MENSAJES = {
     "date_from_datetime_parsing": "debe ser una fecha con formato AAAA-MM-DD",
     "date_type": "debe ser una fecha con formato AAAA-MM-DD",
     "extra_forbidden": "no es un campo permitido",
+    "string_type": "debe ser texto",
+    "decimal_parsing": "debe ser un número",
+    "decimal_type": "debe ser un número",
+    "string_too_long": "es demasiado largo",
     "json_invalid": "el cuerpo no es un JSON válido",
     "model_attributes_type": "el cuerpo debe ser un objeto JSON",
     "dict_type": "el cuerpo debe ser un objeto JSON",
@@ -57,7 +62,13 @@ def _es_api(request: Request) -> bool:
 def registrar_manejadores(app: FastAPI) -> None:
     @app.exception_handler(ErrorNegocio)
     async def _negocio(request: Request, exc: ErrorNegocio):
-        return JSONResponse(status_code=exc.http, content={"detail": exc.mensaje, "codigo": exc.codigo})
+        cuerpo = {"detail": exc.mensaje, "codigo": exc.codigo}
+        if exc.campo:
+            cuerpo["campo"] = exc.campo
+        if exc.errores:
+            cuerpo["errores"] = exc.errores
+        headers = {"WWW-Authenticate": "Bearer"} if exc.http == 401 else None
+        return JSONResponse(status_code=exc.http, content=cuerpo, headers=headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validacion(request: Request, exc: RequestValidationError):

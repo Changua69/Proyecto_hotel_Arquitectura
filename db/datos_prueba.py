@@ -69,6 +69,7 @@ def cargar_datos(db: Database) -> None:
 
     # El contador continúa después de los ids explícitos (equivale a setval de una secuencia).
     db.contadores.insert_one({"_id": "reserva", "valor": max(r[0] for r in RESERVAS)})
+    db.contadores.insert_one({"_id": "huesped", "valor": max(h["_id"] for h in HUESPEDES)})
 
 
 def verificacion(db: Database) -> dict:

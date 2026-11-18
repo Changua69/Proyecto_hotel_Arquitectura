@@ -1,0 +1,98 @@
+{
+  "prueba": "Extremo a extremo desde la pantalla (Interfaz -> API -> Servicio -> Repositorio -> MongoDB)",
+  "fecha": "2026-11-17T23:19:40",
+  "frontend": "http://localhost:5173",
+  "api": "http://127.0.0.1:8000",
+  "navegador": "Chromium (Playwright)",
+  "todos_cumplen": true,
+  "escenarios": [
+    {
+      "escenario": "CA-01",
+      "descripcion": "Familiar, 3 personas, 20-23 dic",
+      "esperado": "Reserva #4 confirmada, habitación 201, $600.000; el ID se confirma",
+      "observado": "Reserva #4 confirmada; hab. 201=True; total=True; 75 ms",
+      "cumple": true,
+      "captura": "ca01_confirmada.png"
+    },
+    {
+      "escenario": "CA-02",
+      "descripcion": "Suites 21-22 dic",
+      "esperado": "302, 303 y 304 (la 301 ocupada no aparece)",
+      "observado": "3 habitación(es) Suite disponibles para 1 noche(s): 302, 303, 304.",
+      "cumple": true,
+      "captura": "ca02_disponibilidad.png"
+    },
+    {
+      "escenario": "CA-03",
+      "descripcion": "Suites ocupadas 21-22 dic",
+      "esperado": "Aviso sin disponibilidad y botón Confirmar deshabilitado",
+      "observado": "No hay habitaciones Suite libres del 21 dic 2026 al 22 dic 2026. Pruebe otras fechas u otro tipo.; confirmar deshabilitado=True",
+      "cumple": true,
+      "captura": "ca03_sin_disponibilidad.png"
+    },
+    {
+      "escenario": "CA-03b",
+      "descripcion": "La última Suite se ocupa antes de confirmar",
+      "esperado": "409: aviso claro, sin 'confirmada' y sin reserva nueva",
+      "observado": "Ya no hay habitaciones libres de ese tipo para esas fechas. Consulte otras fechas u otro tipo.; reservas 6->6; falso éxito=0",
+      "cumple": true,
+      "captura": "ca03_409_desde_pantalla.png"
+    },
+    {
+      "escenario": "CA-04",
+      "descripcion": "Suite desde el 23 (día de salida de la 301)",
+      "esperado": "Se permite y se asigna la 301",
+      "observado": "Reserva #4 confirmada Huésped Carlos Méndez (#2) Habitación",
+      "cumple": true,
+      "captura": null
+    },
+    {
+      "escenario": "CA-05",
+      "descripcion": "Estándar con 3 personas",
+      "esperado": "422: 'admite como máximo 2 personas', sin reserva",
+      "observado": "El tipo Estándar admite como máximo 2 personas.",
+      "cumple": true,
+      "captura": "ca05_capacidad.png"
+    },
+    {
+      "escenario": "CA-06",
+      "descripcion": "Salida antes de la entrada y entrada en el pasado",
+      "esperado": "Campo marcado y envío bloqueado (el backend además responde 400)",
+      "observado": "['Debe ser posterior a la entrada'] / ['No puede ser anterior a hoy']; consultar bloqueado=True",
+      "cumple": true,
+      "captura": "ca06_fechas.png"
+    },
+    {
+      "escenario": "CA-07",
+      "descripcion": "10 pantallas confirman a la vez la última Suite (304)",
+      "esperado": "1 'confirmada', 9 'Ya no hay habitaciones', 1 sola reserva activa en la 304",
+      "observado": "las 10 vieron la 304=True; confirmadas=1; rechazadas=9; activas 304=1",
+      "cumple": true,
+      "captura": "ca07_ganador.png"
+    },
+    {
+      "escenario": "RNF-01",
+      "descripcion": "Tiempo visto por el usuario (10 consultas y 10 creaciones)",
+      "esperado": "p95 <= 2000 ms",
+      "observado": "consulta p95 82.4 ms; creación p95 78.6 ms (media 64 ms)",
+      "cumple": true,
+      "captura": null
+    },
+    {
+      "escenario": "404",
+      "descripcion": "Consultar huésped 999 después del 1",
+      "esperado": "Mensaje 'no existe' y no quedan datos del huésped 1",
+      "observado": "El huésped no existe.; datos viejos=0",
+      "cumple": true,
+      "captura": "huesped_404.png"
+    },
+    {
+      "escenario": "Caída",
+      "descripcion": "El backend no responde al confirmar",
+      "esperado": "Aviso comprensible, sin 'confirmada', datos conservados",
+      "observado": "No se pudo conectar con el servidor. Verifique que el backend esté encendido e intente de nuevo.; falso éxito=0; datos conservados=True",
+      "cumple": true,
+      "captura": "backend_caido.png"
+    }
+  ]
+}

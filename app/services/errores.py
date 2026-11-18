@@ -9,9 +9,11 @@ class ErrorNegocio(Exception):
     http: int = 400
     codigo: str = "ERROR_NEGOCIO"
 
-    def __init__(self, mensaje: str):
+    def __init__(self, mensaje: str, campo: str | None = None, errores: list[dict] | None = None):
         super().__init__(mensaje)
         self.mensaje = mensaje
+        self.campo = campo        # campo del formulario que causó el error (la pantalla lo marca)
+        self.errores = errores    # lista [{"campo", "mensaje"}] cuando hay varios errores de validación
 
 
 class EntradaInvalidaError(ErrorNegocio):
@@ -47,3 +49,32 @@ class CapacidadExcedidaError(ErrorNegocio):
 
     http = 422
     codigo = "CAPACIDAD_EXCEDIDA"
+
+
+# ------------------------------------------------------------------ semana 15
+class DatoDuplicadoError(ErrorNegocio):
+    """Documento o correo de huésped que ya pertenece a otro huésped."""
+
+    http = 409
+    codigo = "DATO_DUPLICADO"
+
+
+class HuespedConReservasError(ErrorNegocio):
+    """No se borra un huésped que tiene reservas activas (CONFIRMADA o EN_CURSO)."""
+
+    http = 409
+    codigo = "HUESPED_CON_RESERVAS"
+
+
+class NoAutenticadoError(ErrorNegocio):
+    """Falta el token o está vencido: hay que iniciar sesión."""
+
+    http = 401
+    codigo = "NO_AUTENTICADO"
+
+
+class SinPermisoError(ErrorNegocio):
+    """El usuario inició sesión, pero su rol no permite esta operación."""
+
+    http = 403
+    codigo = "SIN_PERMISO"
