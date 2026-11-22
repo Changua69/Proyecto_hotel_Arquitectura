@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast"
 import Login from "../pages/Login"
 import Dashboard from "../pages/dashboard"
 import RoomDetail from "../pages/RoomDetail"
+import MisReservas from "../pages/MisReservas"
 import Panel from "../pages/Panel"
 import Huespedes from "../pages/Huespedes"
 import NuevaReserva from "../pages/NuevaReserva"
@@ -29,6 +30,7 @@ function AppRoutes() {
 
         {/* Portal del huésped (semanas anteriores) */}
         <Route path="/dashboard" element={<RequireRole roles={["huesped", ...PERSONAL]}><Dashboard /></RequireRole>} />
+        <Route path="/mis-reservas" element={<RequireRole roles={["huesped"]}><MisReservas /></RequireRole>} />
         <Route path="/rooms/:number" element={<RequireRole roles={["huesped", ...PERSONAL]}><RoomDetail /></RequireRole>} />
 
         {/* Panel del personal (semana 15) */}

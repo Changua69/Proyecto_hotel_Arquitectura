@@ -94,7 +94,7 @@ reales** y el script se niega a crearlas en Atlas):
 |---|---|---|
 | admin@marea.test | admin | Todo, incluido Administración, eliminar huéspedes y reporte PDF |
 | recepcion@marea.test | recepcionista | Dashboard, Nueva reserva, Huéspedes (sin eliminar), Reservas |
-| ana@example.com | huesped | Portal del huésped; por API solo sus datos y sus reservas |
+| ana@example.com | huesped | Portal del huésped y **Mis reservas** (solo ve las suyas) |
 
 Para cuentas reales del personal: `python -m scripts.crear_usuario --email ... --rol recepcionista`
 (pide la contraseña sin mostrarla).
