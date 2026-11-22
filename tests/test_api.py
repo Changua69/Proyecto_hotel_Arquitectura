@@ -14,10 +14,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.app import app
+from app.auth.jwt_handler import create_access_token
 from app.persistence.db import base, nueva_conexion
 from app.persistence.repositories import MongoReservaRepository
 
-api = TestClient(app)
+# Semana 15: crear y consultar reservas exige sesión. Estas pruebas actúan como recepcionista.
+PERSONAL = {"Authorization": f"Bearer {create_access_token({'sub': 'recepcion@marea.test', 'role': 'recepcionista'})}"}
+api = TestClient(app, headers=PERSONAL)
 
 VALIDA = {"id_huesped": 1, "id_tipo": 2, "fecha_entrada": "2026-12-20", "fecha_salida": "2026-12-23", "numero_personas": 3}
 
@@ -204,7 +207,7 @@ def test_rnf03_fallo_despues_de_guardar_responde_500_generico_sin_datos_parciale
 
     monkeypatch.setattr(MongoReservaRepository, "guardar", guardar_y_fallar)
     antes, cont = n_reservas(), contador()
-    r = TestClient(app, raise_server_exceptions=False).post("/api/reservas", json=VALIDA)
+    r = TestClient(app, raise_server_exceptions=False, headers=PERSONAL).post("/api/reservas", json=VALIDA)
     assert r.status_code == 500
     assert r.json() == {"detail": "Ocurrió un error interno. Intente de nuevo más tarde.", "codigo": "ERROR_INTERNO"}
     assert "conexión perdida" not in r.text  # no se exponen detalles técnicos
@@ -221,7 +224,7 @@ def test_rnf08_diez_solicitudes_simultaneas_por_la_ultima_suite():  # CA-07
     cuerpo = {**VALIDA, "id_tipo": 3, "fecha_entrada": "2026-12-26", "fecha_salida": "2026-12-28", "numero_personas": 2}
 
     def intentar():
-        cliente = TestClient(app)
+        cliente = TestClient(app, headers=PERSONAL)
         barrera.wait()
         codigos.append(cliente.post("/api/reservas", json=cuerpo).status_code)
 

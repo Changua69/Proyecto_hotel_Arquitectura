@@ -8,6 +8,7 @@ Reglas de la capa:
 - En la frontera se convierten tipos: date <-> datetime (BSON no tiene fecha sin hora) y
   Decimal <-> Decimal128 (dinero sin errores de punto flotante).
 """
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
@@ -18,10 +19,13 @@ from pymongo.errors import DuplicateKeyError, WriteError
 from app.persistence.db import UnidadDeTrabajo
 from app.persistence.errors import (
     DatosInvalidosError,
+    DuplicadoError,
     ReferenciaInexistenteError,
     SolapeReservaError,
 )
-from app.persistence.models import Habitacion, Huesped, NuevaReserva, Reserva, TipoHabitacion
+from app.persistence.models import (
+    Habitacion, Huesped, NuevaReserva, NuevoHuesped, Reserva, ReservaFila, TipoHabitacion,
+)
 
 ESTADOS_ACTIVOS = ["CONFIRMADA", "EN_CURSO"]
 _VALIDACION_FALLIDA = 121  # código de MongoDB: DocumentValidationFailure
@@ -93,11 +97,80 @@ class MongoHabitacionRepository(_Repo):
 
 
 class MongoHuespedRepository(_Repo):
+    _LIMITE_LISTADO = 200
+
+    @staticmethod
+    def _a_modelo(d: dict) -> Huesped:
+        return Huesped(d["_id"], d["nombre"], d["documento"], d.get("nacionalidad"), d.get("telefono"), d.get("correo"))
+
+    @staticmethod
+    def _a_documento(h: NuevoHuesped) -> dict:
+        return {"nombre": h.nombre, "documento": h.documento, "nacionalidad": h.nacionalidad,
+                "telefono": h.telefono, "correo": h.correo}
+
+    @staticmethod
+    def _campo_duplicado(e: DuplicateKeyError) -> str:
+        """Lee del error qué índice único falló (documento o correo)."""
+        patron = (e.details or {}).get("keyPattern") or {}
+        if "correo" in patron or "ux_huesped_correo" in str(e):
+            return "correo"
+        return "documento"
+
     def obtener_por_id(self, id_huesped: int) -> Huesped | None:
         d = self._db.huespedes.find_one({"_id": id_huesped}, session=self._s)
-        if not d:
-            return None
-        return Huesped(d["_id"], d["nombre"], d["documento"], d.get("nacionalidad"), d.get("telefono"), d.get("correo"))
+        return self._a_modelo(d) if d else None
+
+    def listar(self, buscar: str | None = None) -> list[Huesped]:
+        filtro: dict = {}
+        if buscar:
+            # re.escape: el texto del usuario se busca literal (no se interpreta como expresión regular)
+            patron = {"$regex": re.escape(buscar), "$options": "i"}
+            filtro = {"$or": [{"nombre": patron}, {"documento": patron}, {"correo": patron}]}
+        cursor = (self._db.huespedes.find(filtro, session=self._s)
+                  .sort([("nombre", 1), ("_id", 1)]).limit(self._LIMITE_LISTADO))
+        return [self._a_modelo(d) for d in cursor]
+
+    def _siguiente_id(self) -> int:
+        """Contador 'huesped' en la colección contadores. Si no existe (base antigua), arranca en el id máximo."""
+        if self._db.contadores.count_documents({"_id": "huesped"}, limit=1, session=self._s) == 0:
+            ultimo = self._db.huespedes.find_one({}, sort=[("_id", -1)], projection={"_id": 1}, session=self._s)
+            self._db.contadores.update_one({"_id": "huesped"},
+                                           {"$setOnInsert": {"valor": ultimo["_id"] if ultimo else 0}},
+                                           upsert=True, session=self._s)
+        doc = self._db.contadores.find_one_and_update(
+            {"_id": "huesped"}, {"$inc": {"valor": 1}},
+            return_document=ReturnDocument.AFTER, session=self._s,
+        )
+        return doc["valor"]
+
+    def _traducir(self, e: Exception) -> Exception:
+        if isinstance(e, DuplicateKeyError):
+            return DuplicadoError(self._campo_duplicado(e))
+        if isinstance(e, WriteError) and e.code == _VALIDACION_FALLIDA:
+            return DatosInvalidosError("Datos rechazados por el validador de 'huespedes'")
+        return e
+
+    def crear(self, huesped: NuevoHuesped) -> int:
+        id_huesped = self._siguiente_id()
+        try:
+            self._db.huespedes.insert_one({"_id": id_huesped, **self._a_documento(huesped)}, session=self._s)
+        except WriteError as e:  # DuplicateKeyError es subclase de WriteError
+            raise self._traducir(e) from e
+        return id_huesped
+
+    def actualizar(self, id_huesped: int, huesped: NuevoHuesped) -> bool:
+        try:
+            r = self._db.huespedes.replace_one({"_id": id_huesped}, self._a_documento(huesped), session=self._s)
+        except WriteError as e:
+            raise self._traducir(e) from e
+        return r.matched_count == 1
+
+    def eliminar(self, id_huesped: int) -> bool:
+        return self._db.huespedes.delete_one({"_id": id_huesped}, session=self._s).deleted_count == 1
+
+    def contar_reservas_activas(self, id_huesped: int) -> int:
+        return self._db.reservas.count_documents(
+            {"id_huesped": id_huesped, "estado": {"$in": ESTADOS_ACTIVOS}}, session=self._s)
 
 
 class MongoReservaRepository(_Repo):
@@ -181,3 +254,77 @@ class MongoReservaRepository(_Repo):
     def buscar_por_id(self, id_reserva: int) -> Reserva | None:
         d = self._db.reservas.find_one({"_id": id_reserva}, session=self._s)
         return self._a_modelo(d) if d else None
+
+
+class MongoGestionRepository(_Repo):
+    """Consultas de lectura para el panel, la administración y el reporte de ventas (semana 15)."""
+
+    _COLECCIONES = {"huespedes", "habitaciones", "reservas"}
+
+    def listar_reservas(self, estado=None, desde=None, hasta=None, id_huesped=None, limite=500) -> list[ReservaFila]:
+        filtro: dict = {}
+        if estado:
+            filtro["estado"] = estado
+        if id_huesped:
+            filtro["id_huesped"] = id_huesped
+        rango = {}
+        if desde:
+            rango["$gte"] = a_fecha_bson(desde)
+        if hasta:
+            rango["$lte"] = a_fecha_bson(hasta)
+        if rango:
+            filtro["fecha_entrada"] = rango
+        tubo = [
+            {"$match": filtro},
+            {"$sort": {"fecha_entrada": -1, "_id": -1}},
+            {"$limit": limite},
+            {"$lookup": {"from": "huespedes", "localField": "id_huesped", "foreignField": "_id", "as": "h"}},
+            {"$lookup": {"from": "habitaciones", "localField": "id_habitacion", "foreignField": "_id", "as": "hab"}},
+            {"$unwind": {"path": "$hab", "preserveNullAndEmptyArrays": True}},
+            {"$lookup": {"from": "tipos_habitacion", "localField": "hab.id_tipo", "foreignField": "_id", "as": "t"}},
+        ]
+        filas = []
+        for d in self._db.reservas.aggregate(tubo, session=self._s):
+            h = d["h"][0] if d["h"] else {}
+            t = d["t"][0] if d["t"] else {}
+            filas.append(ReservaFila(
+                id_reserva=d["_id"], estado=d["estado"],
+                fecha_entrada=d["fecha_entrada"].date(), fecha_salida=d["fecha_salida"].date(),
+                numero_personas=d["numero_personas"], tarifa_noche=_dinero(d["tarifa_noche"]), total=_dinero(d["total"]),
+                id_huesped=d["id_huesped"], huesped=h.get("nombre", f"Huésped {d['id_huesped']}"),
+                habitacion=(d.get("hab") or {}).get("numero", "?"), tipo=t.get("nombre", "?"),
+                creada_en=d["creada_en"],
+            ))
+        return filas
+
+    def cancelar_reserva(self, id_reserva: int) -> bool:
+        # Solo CONFIRMADA: al pasar a CANCELADA la reserva sale del índice parcial y sus noches quedan libres.
+        r = self._db.reservas.update_one({"_id": id_reserva, "estado": "CONFIRMADA"},
+                                         {"$set": {"estado": "CANCELADA"}}, session=self._s)
+        return r.modified_count == 1
+
+    def contar(self, coleccion: str, filtro_estado=None) -> int:
+        if coleccion not in self._COLECCIONES:
+            raise ValueError(coleccion)
+        filtro = {"estado": {"$in": filtro_estado}} if filtro_estado else {}
+        return self._db[coleccion].count_documents(filtro, session=self._s)
+
+    def ocupadas_en(self, dia: date) -> int:
+        return len(self._db.reservas.distinct(
+            "id_habitacion", {"estado": {"$in": ESTADOS_ACTIVOS}, "noches": a_fecha_bson(dia)}, session=self._s))
+
+    def listar_tipos(self) -> list[TipoHabitacion]:
+        return [TipoHabitacion(d["_id"], d["nombre"], d["capacidad_max"], _dinero(d["tarifa_noche"]))
+                for d in self._db.tipos_habitacion.find({}, session=self._s).sort("_id", 1)]
+
+    def actualizar_tipo(self, id_tipo: int, capacidad_max: int, tarifa_noche) -> bool:
+        try:
+            r = self._db.tipos_habitacion.update_one(
+                {"_id": id_tipo},
+                {"$set": {"capacidad_max": capacidad_max, "tarifa_noche": a_dinero_bson(tarifa_noche)}},
+                session=self._s)
+        except WriteError as e:
+            if e.code == _VALIDACION_FALLIDA:
+                raise DatosInvalidosError("Datos rechazados por el validador de 'tipos_habitacion'") from e
+            raise
+        return r.matched_count == 1

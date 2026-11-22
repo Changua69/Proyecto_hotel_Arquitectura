@@ -382,3 +382,108 @@ lo avisa en el registro del servidor y la verificación del registro sigue funci
 
 **Corrección relacionada:** `passlib` (usado para cifrar contraseñas) no funciona con `bcrypt` 5.0. El
 registro respondía 500 antes de llegar a guardar. Se fijó `bcrypt==4.0.1` en `instaladores.txt`.
+
+---
+
+## Checklist de entrega (guía de la semana 14, sección 8)
+
+| Criterio | Cumple | Evidencia |
+|---|---|---|
+| Los dos RF mantienen la prioridad y el alcance de la semana 1 (13 del curso) | Sí | Sección 1: RF-04 (prioridad 1) y RF-02 (prioridad 2), con los mismos identificadores. Lo que quedó fuera sigue fuera: login, registro de huéspedes, modificar o cancelar. |
+| Ambos RF tienen servicios y endpoints identificables | Sí | `RegistrarReservaService` → `POST /api/reservas` y `GET /api/reservas/{id}` · `ConsultarDisponibilidadService` → `GET /api/disponibilidad` (tabla “Dónde está cada responsabilidad”) |
+| Los contratos describen éxito, entrada inválida y errores pertinentes | Sí | Sección 2 · `evidencias/semana14/contratos_ejemplos.md` (salida real del backend) · `http://127.0.0.1:8000/docs` |
+| Hay resultado válido y rechazo o ausencia probados para cada RF | Sí | Sección 3: RF-04 → 201, 409, 422, 400, 404 · RF-02 → 200, lista vacía, 404, 422, 400 · `tests/test_api.py` |
+| Se verifica persistencia real y ausencia de escrituras indebidas | Sí | La reserva creada se relee desde otra conexión. En cada rechazo se compara la cantidad de reservas antes y después, y el contador de ids no avanza. Las consultas no modifican datos. |
+| El acceso a datos queda en persistencia y las reglas en el servicio | Sí | Las reglas RN-01 a RN-05 están en `app/services/reservas.py`; MongoDB solo se usa en `app/persistence`. `evidencias/semana14/verificar_capas.txt` muestra 0 hallazgos. (El proyecto usa MongoDB: el equivalente al “SQL” de la guía son las consultas de pymongo.) |
+| Cada RF se vincula con sus RNF y atributos ISO/IEC 25010 | Sí | Sección 4: RF-02 y RF-04 con RNF-01, RNF-03, RNF-06 y RNF-08 |
+| Los RNF previstos tienen medidas observadas y evidencias | Sí | `evidencias/semana14/rnf01_api.json` (p95 por HTTP), `rnf06_servicios_aislados.txt`, y las pruebas de RNF-03 y RNF-08 en `pytest_resultado.txt` |
+| Se distinguen incumplimientos y pendientes de la semana 3 (15 del curso) | Sí | No hay incumplimientos. Quedan pendientes para la semana 15: RNF-08 desde la pantalla (CA-07), el tiempo de creación visto desde la interfaz y los escenarios CA-01 a CA-07 de punta a punta (sección 4 y relevo a la interfaz). |
+| El README permite ejecutar y repetir las pruebas | Sí | Sección 5: requisitos, variables, puertos, comandos y cómo reiniciar los datos |
+
+---
+
+## Antes de cerrar: demostración desde un cliente HTTP
+
+Se usa `curl` desde la terminal. También se puede usar `http://127.0.0.1:8000/docs` y el botón
+**Try it out**.
+
+**Preparación:** MongoDB encendido y la base en su estado inicial.
+
+```bash
+docker compose up -d
+source venv/bin/activate
+python -m scripts.reset_db
+uvicorn app.api.app:app --port 8000      # dejar abierta; los curl van en otra terminal
+```
+
+**1. RF-02, consultar disponibilidad (CA-02).** Responde 200 con la 302, la 303 y la 304; la 301 no
+sale porque está ocupada.
+```bash
+curl -s "http://127.0.0.1:8000/api/disponibilidad?id_tipo=3&fecha_entrada=2026-12-21&fecha_salida=2026-12-22&personas=2"
+```
+
+**2. RF-04, crear reserva (CA-01).** Responde 201 con `id_reserva` 4, la habitación 201 y un total de
+600000.
+```bash
+curl -s -i -X POST http://127.0.0.1:8000/api/reservas -H "Content-Type: application/json" \
+  -d '{"id_huesped":1,"id_tipo":2,"fecha_entrada":"2026-12-20","fecha_salida":"2026-12-23","numero_personas":3}'
+```
+
+**3. RF-04, consultar la reserva creada.** Responde 200 con los mismos datos de la creación.
+```bash
+curl -s http://127.0.0.1:8000/api/reservas/4
+```
+
+**4. RF-04, reserva que no existe.** Responde 404 `NO_ENCONTRADO`.
+```bash
+curl -s -w "  HTTP %{http_code}\n" http://127.0.0.1:8000/api/reservas/999999
+```
+
+**5. RF-04, sin disponibilidad (CA-03).** Las tres primeras solicitudes responden 201 (302, 303 y 304);
+la cuarta responde 409 `SIN_DISPONIBILIDAD`.
+```bash
+for i in 1 2 3 4; do curl -s -w "  HTTP %{http_code}\n" -X POST http://127.0.0.1:8000/api/reservas \
+  -H "Content-Type: application/json" \
+  -d '{"id_huesped":2,"id_tipo":3,"fecha_entrada":"2026-12-21","fecha_salida":"2026-12-22","numero_personas":2}'; done
+```
+
+**6. RF-04, capacidad excedida (CA-05).** Responde 422 `CAPACIDAD_EXCEDIDA`.
+```bash
+curl -s -w "  HTTP %{http_code}\n" -X POST http://127.0.0.1:8000/api/reservas -H "Content-Type: application/json" \
+  -d '{"id_huesped":1,"id_tipo":1,"fecha_entrada":"2026-12-20","fecha_salida":"2026-12-23","numero_personas":3}'
+```
+
+**7. RF-02, fechas inválidas (CA-06).** Responde 400 `FECHAS_INVALIDAS`.
+```bash
+curl -s -w "  HTTP %{http_code}\n" "http://127.0.0.1:8000/api/disponibilidad?id_tipo=3&fecha_entrada=2026-12-22&fecha_salida=2026-12-21&personas=2"
+```
+
+Para repetir la demostración desde el principio: `python -m scripts.reset_db`.
+
+### Dónde está cada responsabilidad
+
+| Capa | RF-02 Consultar disponibilidad | RF-04 Crear reserva |
+|---|---|---|
+| Endpoint (recibe HTTP y delega) | `app/api/rutas.py` → `consultar_disponibilidad` | `app/api/rutas.py` → `crear_reserva` y `consultar_reserva` |
+| Formato de entrada y salida | `app/api/esquemas.py` → `DisponibilidadSalida` | `app/api/esquemas.py` → `ReservaEntrada`, `ReservaSalida` |
+| Errores a HTTP | `app/api/errores.py` | `app/api/errores.py` |
+| Servicio (reglas RN-01 a RN-05) | `app/services/reservas.py` → `ConsultarDisponibilidadService` | `app/services/reservas.py` → `RegistrarReservaService`, `ConsultarReservaService` |
+| Transacción | `app/persistence/proveedor.py` → `leer` | `app/persistence/proveedor.py` → `escribir` (confirma, aborta y reintenta) |
+| Repositorios (consultan y guardan) | `app/persistence/repositories.py` → `buscar_libres_por_tipo_y_rango` | `app/persistence/repositories.py` → `guardar`, `buscar_por_id`, `obtener_por_id` |
+| Refuerzo en la base | — | `db/esquema.py` → índice único `ux_reserva_sin_solape` (RN-01) y validador de fechas (RN-03) |
+
+---
+
+## Diferencias con la plantilla de alcance (Tabla 1)
+
+La Tabla 1 fue la primera plantilla del grupo. Después, el documento del segundo corte (*MareaDorada
+Pro v1.0 — Corte vertical*) detalló el contrato, y la implementación sigue ese documento.
+
+| Tabla 1 | Implementado | Motivo |
+|---|---|---|
+| `GET /habitaciones/disponibilidad?entrada=&salida=&tipo=` | `GET /api/disponibilidad?id_tipo=&fecha_entrada=&fecha_salida=&personas=` | Ruta y parámetros del documento del segundo corte (sección 6.3), con el prefijo `/api` y el número de personas, que hace falta para validar la capacidad (RN-02) |
+| `POST /reservas` | `POST /api/reservas` | Mismo recurso, con el prefijo `/api` |
+| — | `GET /api/reservas/{id}` | Confirmación de RF-04 (RF-06 del segundo corte); también permite verificar una reserva antes de repetir un envío |
+| Base de datos relacional | MongoDB 8 en replica set | Cambio justificado en `README_SEMANA13.md`, sección 3.1 |
+| Repositorios `buscarPorTipo`, `obtenerPorId`, `buscarReservasSolapadas`, `guardar` | `buscar_por_tipo`, `obtener_por_id`, `buscar_reservas_solapadas`, `guardar`, más `buscar_libres_por_tipo_y_rango` y `buscar_por_id` | Mismos métodos con nombres de Python, más los que necesita la asignación de habitación |
+| Capacidad de la Suite: “2 a 3” | Capacidad máxima de la Suite: 3 | Tabla 15 del documento del segundo corte (Estándar 2, Familiar 4, Suite 3) |

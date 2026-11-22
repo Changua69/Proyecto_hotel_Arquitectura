@@ -2,7 +2,9 @@ import { useState } from "react"
 import toast from "react-hot-toast"
 import type { CSSProperties } from "react"
 import { useNavigate } from "react-router-dom"
-import API from "../services/api"
+import API, { describirError } from "../services/api"
+import { guardarSesion, inicioDe } from "../services/sesion"
+import type { Rol } from "../services/sesion"
 import logo from "../assets/image.ico"
 
 type Tab = "login" | "register"
@@ -23,39 +25,46 @@ function Login() {
 
   const navigate = useNavigate()
 
+  const [enviando, setEnviando] = useState(false)
+
   // 🔹 LOGIN
   const handleLogin = async () => {
+    if (enviando) return
+    if (!email.trim() || !password) {
+      toast.error("Escriba su correo y contraseña")
+      return
+    }
+    setEnviando(true)
     try {
       const params = new URLSearchParams()
-      params.append("username", email)
+      params.append("username", email.trim())
       params.append("password", password)
 
       const res = await API.post("/login", params, {
         headers: { "Content-Type": "application/x-www-form-urlencoded" }
       })
 
-      // 🔥 guardamos datos correctos (sin variable role inexistente)
-      localStorage.setItem("user", JSON.stringify({
-        email,
-        role: res.data.role,
-        token: res.data.access_token
-      }))
-
-      navigate("/dashboard")
-    } catch (error: any) {
-      const message = error.response?.data?.detail
-        || (error.response ? "No fue posible iniciar sesión" : "No se pudo conectar con el servidor")
-      toast.error(message)
+      const sesion = { email: email.trim().toLowerCase(), role: res.data.role as Rol, token: res.data.access_token }
+      guardarSesion(sesion)
+      // Personal (recepción/admin) -> panel; huésped -> portal del huésped
+      navigate(inicioDe(sesion))
+    } catch (error) {
+      const info = describirError(error)
+      toast.error(info.http === 401 ? "Correo o contraseña incorrectos" : info.mensaje)
+    } finally {
+      setEnviando(false)
     }
   }
 
   // 🔹 REGISTER
   const handleRegister = async () => {
+    if (enviando) return
     if (regPassword !== confirmPassword) {
-      alert("Las contraseñas no coinciden")
+      toast.error("Las contraseñas no coinciden")
       return
     }
 
+    setEnviando(true)
     try {
       await API.post("/register", {
         name,
@@ -64,7 +73,7 @@ function Login() {
         phone
       })
 
-      // limpiar campos
+      // limpiar campos solo cuando el backend confirmó el registro
       setName("")
       setRegEmail("")
       setPhone("")
@@ -74,13 +83,11 @@ function Login() {
       toast.success("Usuario creado correctamente")
 
       setTab("login")
-    } catch (error: any) {
-      // Muestra el motivo real del backend, p. ej. "Ya existe una cuenta con ese correo." (409)
-      const detalle = error.response?.data?.detail
-      toast.error(typeof detalle === "string" ? detalle : (error.response ? "Error al registrar" : "Error de conexión"))
-      const message = error.response?.data?.detail
-        || (error.response ? "No fue posible registrar el usuario" : "No se pudo conectar con el servidor")
-      toast.error(message)
+    } catch (error) {
+      // Un solo aviso con el motivo real, p. ej. "Ya existe una cuenta con ese correo." (409)
+      toast.error(describirError(error).mensaje)
+    } finally {
+      setEnviando(false)
     }
   }
 
@@ -121,11 +128,14 @@ function Login() {
                   <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
                 <input type="password" placeholder="••••••••" style={inputInner}
-                  value={password} onChange={e => setPassword(e.target.value)} />
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleLogin() }} />
               </div>
             </Field>
 
-            <button style={primaryBtn} onClick={handleLogin}>Ingresar</button>
+            <button style={{ ...primaryBtn, opacity: enviando ? 0.6 : 1 }} onClick={handleLogin} disabled={enviando}>
+              {enviando ? "Ingresando..." : "Ingresar"}
+            </button>
             <p style={forgotLink}>¿Olvidaste tu contraseña?</p>
           </div>
         )}
@@ -163,8 +173,8 @@ function Login() {
                 value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </Field>
 
-            <button style={primaryBtn} onClick={handleRegister}>
-              Crear Cuenta
+            <button style={{ ...primaryBtn, opacity: enviando ? 0.6 : 1 }} onClick={handleRegister} disabled={enviando}>
+              {enviando ? "Creando cuenta..." : "Crear Cuenta"}
             </button>
           </div>
         )}

@@ -8,14 +8,21 @@ No contiene reglas de negocio ni acceso a MongoDB.
 | RF-02 | GET  /api/disponibilidad      | ConsultarDisponibilidadService |
 | RF-04 | POST /api/reservas            | RegistrarReservaService        |
 | RF-04 | GET  /api/reservas/{id}       | ConsultarReservaService        |
+
+Permisos (semana 15): consultar disponibilidad es público. Crear y consultar reservas exige
+iniciar sesión; recepcionista y admin trabajan con cualquier huésped, y un huésped solo con
+su propia ficha (la que tiene el mismo correo de su cuenta).
 """
 from datetime import date
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 
 from app.api.esquemas import DisponibilidadSalida, ErrorSalida, ReservaEntrada, ReservaSalida
+from app.api.seguridad import Usuario, usuario_actual
 from app.persistence.config import nombre_base
 from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios, comprobar_conexion
+from app.services.errores import SinPermisoError
+from app.services.huespedes import GestionHuespedesService
 from app.services.reservas import (
     ConsultarDisponibilidadService,
     ConsultarReservaService,
@@ -48,6 +55,18 @@ def _errores(*codigos: int) -> dict:
     return {c: {"model": ErrorSalida} for c in codigos}
 
 
+def _exigir_propio(usuario: Usuario, id_huesped: int, p: ProveedorRepositorios) -> None:
+    """Validación recepcionista -> huésped: el personal opera para cualquier huésped;
+    un huésped solo para sí mismo."""
+    if usuario.es_personal:
+        return
+    ficha = GestionHuespedesService(p).obtener_por_correo(usuario.correo)
+    if ficha is None:
+        raise SinPermisoError("Su cuenta no está asociada a un huésped registrado. Acérquese a recepción.")
+    if ficha.id_huesped != id_huesped:
+        raise SinPermisoError("Solo puede gestionar sus propias reservas.")
+
+
 # ------------------------------------------------------------------ RF-02
 @router.get(
     "/disponibilidad",
@@ -76,13 +95,16 @@ def consultar_disponibilidad(
     summary="RF-04. Crear reserva",
     description="Asigna la habitación libre de menor número del tipo, calcula el total y guarda la reserva "
     "CONFIRMADA. Responde 201 solo después de confirmar la escritura.",
-    responses=_errores(400, 404, 409, 422, 503),
+    responses=_errores(400, 401, 403, 404, 409, 422, 503),
 )
 def crear_reserva(
     entrada: ReservaEntrada,
     response: Response,
+    usuario: Usuario = Depends(usuario_actual),
+    p: ProveedorRepositorios = Depends(proveedor),
     servicio: RegistrarReservaService = Depends(servicio_registro),
 ):
+    _exigir_propio(usuario, entrada.id_huesped, p)
     detalle = servicio.registrar(
         SolicitudReserva(
             id_huesped=entrada.id_huesped,
@@ -102,13 +124,17 @@ def crear_reserva(
     summary="RF-04 (confirmación). Consultar una reserva por id",
     description="Recupera una reserva guardada. Sirve para confirmarla y para verificar si una "
     "creación quedó guardada antes de repetirla.",
-    responses=_errores(400, 404, 503),
+    responses=_errores(400, 401, 403, 404, 503),
 )
 def consultar_reserva(
     id_reserva: int = Path(gt=0, description="Entero positivo"),
+    usuario: Usuario = Depends(usuario_actual),
+    p: ProveedorRepositorios = Depends(proveedor),
     servicio: ConsultarReservaService = Depends(servicio_consulta),
 ):
-    return ReservaSalida.desde(servicio.consultar(id_reserva))
+    detalle = servicio.consultar(id_reserva)
+    _exigir_propio(usuario, detalle.huesped.id_huesped, p)
+    return ReservaSalida.desde(detalle)
 
 
 # ------------------------------------------------------------------ estado

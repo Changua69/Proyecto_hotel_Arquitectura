@@ -119,3 +119,43 @@ class ErrorSalida(BaseModel):
 
     detail: str = Field(description="Mensaje para el usuario")
     codigo: str = Field(description="Código interno: DATOS_INVALIDOS, FECHAS_INVALIDAS, NO_ENCONTRADO, ...")
+    campo: str | None = Field(default=None, description="Campo del formulario que causó el error (si aplica)")
+    errores: list[dict] | None = Field(default=None, description="[{campo, mensaje}] en errores de validación")
+
+
+# ------------------------------------------------------------------ huéspedes (semana 15)
+class HuespedEntrada(BaseModel):
+    """Cuerpo de POST /api/huespedes y PUT /api/huespedes/{id}. El id lo asigna el backend."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "nombre": "María Gómez",
+                "documento": "1033445566",
+                "nacionalidad": "Colombiana",
+                "telefono": "3104567890",
+                "correo": "maria@example.com",
+            }
+        },
+    )
+
+    nombre: str = Field(max_length=200, description="2 a 100 caracteres")
+    documento: str = Field(max_length=60, description="3 a 30 letras, números, puntos o guiones; único")
+    nacionalidad: str | None = Field(default=None, max_length=100)
+    telefono: str | None = Field(default=None, max_length=40, description="7 a 20 dígitos; '+' opcional")
+    correo: str | None = Field(default=None, max_length=200, description="Único; se guarda en minúsculas")
+
+
+class HuespedSalida(BaseModel):
+    id_huesped: int
+    nombre: str
+    documento: str
+    nacionalidad: str | None
+    telefono: str | None
+    correo: str | None
+
+    @classmethod
+    def desde(cls, h) -> "HuespedSalida":
+        return cls(id_huesped=h.id_huesped, nombre=h.nombre, documento=h.documento,
+                   nacionalidad=h.nacionalidad, telefono=h.telefono, correo=h.correo)

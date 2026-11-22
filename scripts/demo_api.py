@@ -12,6 +12,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app.api.app import app
+from app.auth.jwt_handler import create_access_token
 from scripts.reset_db import reset
 
 EVID = Path(__file__).resolve().parent.parent / "evidencias" / "semana14"
@@ -39,7 +40,9 @@ CASOS = [
 
 def main() -> None:
     reset(verbose=False)
-    api = TestClient(app)
+    # Semana 15: crear/consultar reservas exige sesión; la demo actúa como recepcionista.
+    token = create_access_token({"sub": "recepcion@marea.test", "role": "recepcionista"})
+    api = TestClient(app, headers={"Authorization": f"Bearer {token}"})
     partes = ["# Ejemplos de contrato ejecutados contra el backend (semana 14)\n",
               "Generado con `python -m scripts.demo_api` sobre la base de prueba recién creada.\n"]
     for titulo, metodo, ruta, cuerpo in CASOS:
