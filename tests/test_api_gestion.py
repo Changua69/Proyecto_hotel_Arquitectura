@@ -155,3 +155,18 @@ def test_actualizar_tarifa(api):
     assert r.status_code == 400 and len(r.json()["errores"]) == 2
     assert api.put("/api/admin/tipos/2", json={"capacidad_max": 4, "tarifa_noche": 1}, headers=RECEP).status_code == 403
     assert len(api.get("/api/admin/tipos", headers=RECEP).json()) == 3
+
+
+# ------------------------------------------------------------------ portal del huésped: Mis reservas
+def test_mis_reservas_solo_las_propias_con_todos_sus_datos(api):
+    filas = api.get("/api/reservas", headers=ANA).json()
+    assert [f["id_reserva"] for f in filas] == [1]
+    assert filas[0]["habitacion"] == "301" and filas[0]["tipo"] == "Suite" and filas[0]["total"] == 840000
+    # aunque pida un estado, sigue viendo solo lo suyo
+    assert api.get("/api/reservas", params={"estado": "CANCELADA"}, headers=ANA).json() == []
+
+
+def test_mis_reservas_cuenta_sin_ficha(api):
+    sin_ficha = token("huesped", "nadie@correo.com")
+    assert api.get("/api/huespedes/yo", headers=sin_ficha).status_code == 404
+    assert api.get("/api/reservas", headers=sin_ficha).json() == []
