@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { CSSProperties, FormEvent } from "react"
 import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
@@ -7,7 +7,7 @@ import { useCarga } from "../hooks/useCarga"
 import { describirError } from "../services/api"
 import { listarReservas } from "../services/gestion"
 import type { ReservaFila } from "../services/gestion"
-import { completarMiFicha, miFicha } from "../services/huespedes"
+import { completarMiFicha, miCuenta, miFicha } from "../services/huespedes"
 import type { Huesped } from "../services/huespedes"
 import { cop, ESTADO_CHIP, ESTADO_TEXTO, fecha, hoyISO } from "../services/formato"
 import { cerrarSesion, leerSesion } from "../services/sesion"
@@ -108,6 +108,15 @@ function CompletarDatos({ correo, onListo }: { correo: string; onListo: () => vo
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
+  // Prellena con lo que ya se escribió al registrarse: solo falta el documento.
+  useEffect(() => {
+    let vivo = true
+    miCuenta().then((c) => {
+      if (vivo) setV((x) => ({ ...x, nombre: x.nombre || c.nombre, telefono: x.telefono || (c.telefono ?? "") }))
+    }).catch(() => { /* sin prellenado: el formulario sigue funcionando */ })
+    return () => { vivo = false }
+  }, [])
+
   const guardar = async (e: FormEvent) => {
     e.preventDefault()
     if (enviando) return
@@ -142,7 +151,8 @@ function CompletarDatos({ correo, onListo }: { correo: string; onListo: () => vo
     <form className="tarjeta" style={{ padding: 20, maxWidth: 560 }} onSubmit={guardar} noValidate>
       <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Complete sus datos</h2>
       <p style={{ fontSize: 13.5, color: "var(--texto-3)", marginBottom: 16 }}>
-        Solo una vez. Quedarán asociados a su correo <b>{correo}</b> y aquí verá sus reservas.
+        Su cuenta se creó antes de que el registro pidiera el documento. Complételo una sola vez: quedará
+        asociado a su correo <b>{correo}</b> y aquí verá sus reservas.
       </p>
       <fieldset disabled={enviando} style={{ border: "none" }}>
         <div className="form-grid">

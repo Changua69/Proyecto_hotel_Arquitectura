@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 from app.api.app import crear_app
 from app.auth.jwt_handler import create_access_token
 from app.persistence.db import base
+from app.api import huespedes as api_huespedes
+from app.persistence.usuarios import MongoUsuarioRepository
 from app.routes import auth
 
 
@@ -21,6 +23,7 @@ def api(monkeypatch):
     auth.asegurar_email_unico()
     app = crear_app()
     app.include_router(auth.router)
+    app.dependency_overrides[api_huespedes.cuentas] = lambda: MongoUsuarioRepository(usuarios)
     yield TestClient(app), usuarios
     usuarios.drop()
 
@@ -99,3 +102,21 @@ def test_personal_no_usa_mi_ficha(api):
     c, _ = api
     recep = {"Authorization": f"Bearer {create_access_token({'sub': 'r@marea.test', 'role': 'recepcionista'})}"}
     assert c.post("/api/huespedes/yo", headers=recep, json={"nombre": "Rec", "documento": "12345678"}).status_code == 403
+
+
+def test_si_se_reinicia_la_base_del_corte_la_ficha_se_recrea_sola(api):
+    c, usuarios = api
+    c.post("/register", json=registro())
+    assert usuarios.find_one({"email": "pedro@correo.com"})["documento"] == "99887766"
+    base().huespedes.delete_one({"correo": "pedro@correo.com"})  # como si se hubiera corrido reset_db
+    r = c.get("/api/huespedes/yo", headers=sesion(c, "pedro@correo.com"))
+    assert r.status_code == 200 and r.json()["documento"] == "99887766" and r.json()["telefono"] == "3001234567"
+
+
+def test_cuenta_antigua_recibe_nombre_y_telefono_para_prellenar(api):
+    c, usuarios = api
+    usuarios.insert_one({"email": "viejo@correo.com", "name": "Cuenta Vieja", "phone": "300 555 1234",
+                         "role": "huesped", "password": auth.pwd_context.hash("Clave12345")})
+    s = sesion(c, "viejo@correo.com")
+    assert c.get("/api/huespedes/yo", headers=s).status_code == 404  # sin documento no se puede crear
+    assert c.get("/api/huespedes/yo/cuenta", headers=s).json() == {"nombre": "Cuenta Vieja", "telefono": "3005551234"}

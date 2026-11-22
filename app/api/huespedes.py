@@ -13,15 +13,28 @@
 Todas exigen token (401 NO_AUTENTICADO) y responden 403 SIN_PERMISO si el rol no alcanza.
 Interfaz -> API (este archivo) -> GestionHuespedesService -> MongoHuespedRepository -> MongoDB.
 """
+import re
+
 from fastapi import APIRouter, Depends, Path, Query, Response
 
 from app.api.esquemas import ErrorSalida, HuespedEntrada, HuespedSalida, MiFichaEntrada
 from app.api.seguridad import ROLES_PERSONAL, Usuario, requiere_rol, usuario_actual
 from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios
-from app.services.errores import DatoDuplicadoError, NoEncontradoError, SinPermisoError
+from app.services.errores import DatoDuplicadoError, ErrorNegocio, NoEncontradoError, SinPermisoError
 from app.services.huespedes import DatosHuesped, GestionHuespedesService
 
 router = APIRouter(prefix="/api/huespedes", tags=["Huéspedes (CRUD, semana 15)"])
+
+
+def cuentas():
+    """Repositorio de cuentas de acceso (colección users)."""
+    from app.persistence.usuarios import MongoUsuarioRepository
+
+    return MongoUsuarioRepository()
+
+
+def _telefono(valor: str | None) -> str | None:
+    return re.sub(r"[^0-9+]", "", valor or "") or None
 
 
 def proveedor() -> ProveedorRepositorios:
@@ -56,11 +69,29 @@ def listar(
 
 @router.get("/yo", response_model=HuespedSalida, summary="Ficha del huésped que inició sesión",
             responses=_errores(401, 404, 503))
-def mi_ficha(usuario: Usuario = Depends(usuario_actual), s: GestionHuespedesService = Depends(servicio)):
+def mi_ficha(usuario: Usuario = Depends(usuario_actual), s: GestionHuespedesService = Depends(servicio),
+             c=Depends(cuentas)):
     h = s.obtener_por_correo(usuario.correo)
+    if h is None and not usuario.es_personal:
+        # La cuenta guarda los datos del registro: si la ficha falta (p. ej. se reinició la base del
+        # corte), se vuelve a crear sola y el huésped no tiene que escribirlos otra vez.
+        datos = c.datos_registro(usuario.correo)
+        if datos and datos.get("documento"):
+            try:
+                h = s.asegurar_ficha_propia(usuario.correo, datos["nombre"] or usuario.correo, datos["documento"],
+                                            _telefono(datos.get("telefono")))
+            except ErrorNegocio:
+                h = None  # p. ej. ese documento ya es de otro huésped: se le pide completar los datos
     if h is None:
         raise NoEncontradoError("Su cuenta no está asociada a ningún huésped registrado.")
     return HuespedSalida.desde(h)
+
+
+@router.get("/yo/cuenta", summary="Datos de la cuenta para prellenar 'Complete sus datos'",
+            responses=_errores(401, 503))
+def mi_cuenta(usuario: Usuario = Depends(usuario_actual), c=Depends(cuentas)):
+    datos = c.datos_registro(usuario.correo) or {}
+    return {"nombre": datos.get("nombre") or "", "telefono": _telefono(datos.get("telefono"))}
 
 
 @router.post("/yo", response_model=HuespedSalida, status_code=201, summary="Completar mi ficha (huésped)",

@@ -61,7 +61,7 @@ def register(user: UserRegister):
     # Se crea ANTES que la cuenta: si el documento es inválido o está repetido, no queda una
     # cuenta a medias. Los errores salen con el formato del corte ({detail, codigo, campo}).
     telefono = re.sub(r"[^0-9+]", "", user.phone or "") or None
-    _servicio_huespedes().asegurar_ficha_propia(email, user.name, user.documento, telefono, user.nacionalidad)
+    ficha = _servicio_huespedes().asegurar_ficha_propia(email, user.name, user.documento, telefono, user.nacionalidad)
 
     hashed_password = pwd_context.hash(user.password)
 
@@ -70,6 +70,7 @@ def register(user: UserRegister):
         "email": email,
         "password": hashed_password,
         "phone": user.phone,
+        "documento": ficha.documento,  # permite reconstruir la ficha si la base del corte se reinicia
         "role": "huesped"
     }
 

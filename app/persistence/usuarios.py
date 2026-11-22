@@ -49,6 +49,13 @@ class MongoUsuarioRepository:
 
         self._ejecutar(insertar)
 
+    def datos_registro(self, email: str) -> dict | None:
+        """Nombre, teléfono y documento con que se registró la cuenta (sin la contraseña)."""
+        d = self._ejecutar(lambda: self._c.find_one({"email": email}, {"password": 0}))
+        if not d:
+            return None
+        return {"nombre": d.get("name") or "", "telefono": d.get("phone"), "documento": d.get("documento")}
+
     def cambiar_rol(self, email: str, rol: str) -> bool:
         return self._ejecutar(lambda: self._c.update_one({"email": email}, {"$set": {"role": rol}}).matched_count == 1)
 

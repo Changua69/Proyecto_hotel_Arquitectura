@@ -28,6 +28,10 @@ export const obtenerHuesped = (id: number) => API.get<Huesped>(`/api/huespedes/$
 
 export const miFicha = () => API.get<Huesped>("/api/huespedes/yo").then((r) => r.data)
 
+/** Nombre y teléfono con que se registró la cuenta (para prellenar el formulario). */
+export const miCuenta = () =>
+  API.get<{ nombre: string; telefono: string | null }>("/api/huespedes/yo/cuenta").then((r) => r.data)
+
 /** Huésped con cuenta antigua (sin ficha): registra sus datos; el correo lo pone el backend. */
 export const completarMiFicha = (d: { nombre: string; documento: string; telefono: string | null }) =>
   API.post<Huesped>("/api/huespedes/yo", { nombre: d.nombre.trim(), documento: d.documento.trim(), telefono: d.telefono?.trim() || null }).then((r) => r.data)
