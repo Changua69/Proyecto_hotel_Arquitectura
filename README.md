@@ -99,6 +99,9 @@ reales** y el script se niega a crearlas en Atlas):
 Quien se registra en **Registrarse** (pide documento) queda creado como cuenta *y* como huésped del
 hotel con el mismo correo, así ve sus reservas en **Mis reservas** sin pasar por recepción. Las cuentas
 antiguas sin esos datos los completan una sola vez desde **Mis reservas**.
+En el portal, **Reservar Ahora** usa el mismo sistema que recepción (`/api/disponibilidad` y
+`/api/reservas`): muestra la tarifa real y la disponibilidad, y la reserva aparece en **Mis reservas** y
+en el panel del personal. La habitación exacta la asigna el backend (la libre de menor número del tipo).
 
 Para cuentas reales del personal: `python -m scripts.crear_usuario --email ... --rol recepcionista`
 (pide la contraseña sin mostrarla).
