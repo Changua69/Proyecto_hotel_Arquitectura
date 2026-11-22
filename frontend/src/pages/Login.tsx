@@ -20,6 +20,7 @@ function Login() {
   const [name, setName] = useState("")
   const [regEmail, setRegEmail] = useState("")
   const [phone, setPhone] = useState("")
+  const [documento, setDocumento] = useState("")
   const [regPassword, setRegPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
@@ -59,6 +60,14 @@ function Login() {
   // 🔹 REGISTER
   const handleRegister = async () => {
     if (enviando) return
+    if (!name.trim() || !regEmail.trim() || !documento.trim()) {
+      toast.error("Complete nombre, correo y documento")
+      return
+    }
+    if (regPassword.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
     if (regPassword !== confirmPassword) {
       toast.error("Las contraseñas no coinciden")
       return
@@ -70,13 +79,15 @@ function Login() {
         name,
         email: regEmail,
         password: regPassword,
-        phone
+        phone,
+        documento: documento.trim()  // semana 15: también queda registrado como huésped del hotel
       })
 
       // limpiar campos solo cuando el backend confirmó el registro
       setName("")
       setRegEmail("")
       setPhone("")
+      setDocumento("")
       setRegPassword("")
       setConfirmPassword("")
 
@@ -153,6 +164,12 @@ function Login() {
               <input type="email" style={inputBlock}
                 placeholder="usuario@gmail.com"
                 value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+            </Field>
+
+            <Field label="Documento de identidad">
+              <input type="text" style={inputBlock}
+                placeholder="1012345678"
+                value={documento} onChange={e => setDocumento(e.target.value)} />
             </Field>
 
             <Field label="Teléfono">

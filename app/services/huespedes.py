@@ -121,6 +121,22 @@ class GestionHuespedesService:
         return next((h for h in self._p.leer(lambda r: r.huespedes.listar(correo))
                      if (h.correo or "").lower() == correo), None)
 
+    def asegurar_ficha_propia(self, correo: str, nombre: str, documento: str | None,
+                              telefono: str | None = None, nacionalidad: str | None = None) -> Huesped:
+        """Registro del huésped (semana 15): la cuenta y la ficha quedan unidas por el correo.
+
+        - Si ya existe una ficha con ese correo (p. ej. la creó recepción), se usa esa: no se duplica.
+        - Si no existe, se crea con el correo de la cuenta (el huésped no puede poner otro).
+        """
+        correo = (correo or "").strip().lower()
+        existente = self.obtener_por_correo(correo)
+        if existente:
+            return existente
+        if not _limpio(documento):
+            raise EntradaInvalidaError("Datos de entrada inválidos. documento: es obligatorio",
+                                       errores=[{"campo": "documento", "mensaje": "es obligatorio"}])
+        return self.crear(DatosHuesped(nombre, documento, nacionalidad, telefono, correo))
+
     # ---------------------------------------------------------------- escritura
     def crear(self, datos: DatosHuesped) -> Huesped:
         nuevo = validar(datos)

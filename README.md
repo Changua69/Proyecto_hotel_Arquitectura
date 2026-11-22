@@ -96,6 +96,10 @@ reales** y el script se niega a crearlas en Atlas):
 | recepcion@marea.test | recepcionista | Dashboard, Nueva reserva, Huéspedes (sin eliminar), Reservas |
 | ana@example.com | huesped | Portal del huésped y **Mis reservas** (solo ve las suyas) |
 
+Quien se registra en **Registrarse** (pide documento) queda creado como cuenta *y* como huésped del
+hotel con el mismo correo, así ve sus reservas en **Mis reservas** sin pasar por recepción. Las cuentas
+antiguas sin esos datos los completan una sola vez desde **Mis reservas**.
+
 Para cuentas reales del personal: `python -m scripts.crear_usuario --email ... --rol recepcionista`
 (pide la contraseña sin mostrarla).
 

@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -17,6 +18,14 @@ log = logging.getLogger("marea.auth")
 # Compara correos sin distinguir mayúsculas de minúsculas: "Ana@Correo.com" == "ana@correo.com".
 SIN_MAYUSCULAS = Collation(locale="en", strength=2)
 MSG_CORREO_REPETIDO = "Ya existe una cuenta con ese correo."
+
+
+def _servicio_huespedes():
+    # Import diferido: el servicio usa la base del corte (MONGO_URI / MONGO_DB_PRUEBA).
+    from app.persistence.proveedor import MongoProveedor
+    from app.services.huespedes import GestionHuespedesService
+
+    return GestionHuespedesService(MongoProveedor())
 
 
 def normalizar_email(email: str) -> str:
@@ -43,6 +52,16 @@ def register(user: UserRegister):
 
     if existing_user:
         raise HTTPException(status_code=409, detail=MSG_CORREO_REPETIDO)
+
+    if len(user.password or "") < 8:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres.")
+
+    # Semana 15: el huésped que se registra queda registrado también como huésped del hotel
+    # (ficha con el mismo correo), así puede ver sus reservas sin pasar por recepción.
+    # Se crea ANTES que la cuenta: si el documento es inválido o está repetido, no queda una
+    # cuenta a medias. Los errores salen con el formato del corte ({detail, codigo, campo}).
+    telefono = re.sub(r"[^0-9+]", "", user.phone or "") or None
+    _servicio_huespedes().asegurar_ficha_propia(email, user.name, user.documento, telefono, user.nacionalidad)
 
     hashed_password = pwd_context.hash(user.password)
 

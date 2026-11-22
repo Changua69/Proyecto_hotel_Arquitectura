@@ -47,14 +47,17 @@ def registro(monkeypatch):
     usuarios.drop()
     monkeypatch.setattr(auth, "users_collection", usuarios)
     auth.asegurar_email_unico()
+    from app.api.errores import registrar_manejadores
+
     app = FastAPI()
     app.include_router(auth.router)
+    registrar_manejadores(app)  # errores del corte (p. ej. documento repetido al crear la ficha)
     yield TestClient(app), usuarios
     usuarios.drop()
 
 
 def datos(email: str) -> dict:
-    return {"name": "Ana", "email": email, "password": "clave123", "phone": "3001234567"}
+    return {"name": "Ana", "email": email, "password": "clave1234", "phone": "3001234567", "documento": "55667788"}
 
 
 def test_registro_con_correo_repetido_409(registro):
@@ -68,7 +71,7 @@ def test_registro_con_correo_repetido_409(registro):
 def test_login_no_distingue_mayusculas(registro):
     api, _ = registro
     api.post("/register", json=datos("ana@correo.com"))
-    r = api.post("/login", data={"username": "ANA@CORREO.COM", "password": "clave123"})
+    r = api.post("/login", data={"username": "ANA@CORREO.COM", "password": "clave1234"})
     assert r.status_code == 200 and r.json()["role"] == "huesped"
 
 

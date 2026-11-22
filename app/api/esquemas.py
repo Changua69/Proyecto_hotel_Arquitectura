@@ -147,6 +147,18 @@ class HuespedEntrada(BaseModel):
     correo: str | None = Field(default=None, max_length=200, description="Único; se guarda en minúsculas")
 
 
+class MiFichaEntrada(BaseModel):
+    """Cuerpo de POST /api/huespedes/yo. El correo NO se envía: es el de la sesión."""
+
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"example": {
+        "nombre": "Juan Pérez", "documento": "1012345678", "telefono": "3001234567", "nacionalidad": "Colombiana"}})
+
+    nombre: str = Field(max_length=200)
+    documento: str = Field(max_length=60)
+    telefono: str | None = Field(default=None, max_length=40)
+    nacionalidad: str | None = Field(default=None, max_length=100)
+
+
 class HuespedSalida(BaseModel):
     id_huesped: int
     nombre: str

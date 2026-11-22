@@ -1,11 +1,13 @@
-import type { CSSProperties } from "react"
+import { useState } from "react"
+import type { CSSProperties, FormEvent } from "react"
+import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/image.ico"
 import { useCarga } from "../hooks/useCarga"
 import { describirError } from "../services/api"
 import { listarReservas } from "../services/gestion"
 import type { ReservaFila } from "../services/gestion"
-import { miFicha } from "../services/huespedes"
+import { completarMiFicha, miFicha } from "../services/huespedes"
 import type { Huesped } from "../services/huespedes"
 import { cop, ESTADO_CHIP, ESTADO_TEXTO, fecha, hoyISO } from "../services/formato"
 import { cerrarSesion, leerSesion } from "../services/sesion"
@@ -82,12 +84,7 @@ export default function MisReservas() {
           </div>
         )}
 
-        {carga.fase === "ok" && !carga.datos.ficha && (
-          <div className="aviso aviso-info">
-            Su cuenta ({sesion?.email}) todavía no está asociada a un huésped registrado. Acérquese a recepción para
-            que registren sus datos con este mismo correo y así podrá ver sus reservas aquí.
-          </div>
-        )}
+        {carga.fase === "ok" && !carga.datos.ficha && <CompletarDatos correo={sesion?.email ?? ""} onListo={recargar} />}
 
         {carga.fase === "ok" && carga.datos.ficha && carga.datos.reservas.length === 0 && (
           <div className="tarjeta vacio">Aún no tiene reservas registradas.</div>
@@ -101,6 +98,64 @@ export default function MisReservas() {
         )}
       </main>
     </div>
+  )
+}
+
+/** Cuentas creadas antes de que el registro pidiera el documento: completan sus datos una sola vez. */
+function CompletarDatos({ correo, onListo }: { correo: string; onListo: () => void }) {
+  const [v, setV] = useState({ nombre: "", documento: "", telefono: "" })
+  const [errores, setErrores] = useState<Record<string, string>>({})
+  const [error, setError] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+
+  const guardar = async (e: FormEvent) => {
+    e.preventDefault()
+    if (enviando) return
+    const locales: Record<string, string> = {}
+    if (v.nombre.trim().length < 2) locales.nombre = "es obligatorio"
+    if (!v.documento.trim()) locales.documento = "es obligatorio"
+    setErrores(locales); setError(null)
+    if (Object.keys(locales).length) return
+    setEnviando(true)
+    try {
+      await completarMiFicha({ nombre: v.nombre, documento: v.documento, telefono: v.telefono || null })
+      toast.success("Datos guardados")
+      onListo()
+    } catch (err) {
+      const info = describirError(err)
+      setErrores(info.campos)
+      setError(info.mensaje)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  const campo = (k: keyof typeof v, etiqueta: string, req = false) => (
+    <div className={`campo${errores[k] ? " con-error" : ""}`}>
+      <label htmlFor={`f-${k}`}>{etiqueta}{req && <span className="req"> *</span>}</label>
+      <input id={`f-${k}`} value={v[k]} onChange={(e) => { setV({ ...v, [k]: e.target.value }); setErrores({ ...errores, [k]: "" }) }} />
+      {errores[k] && <div className="msg-error">{/^[a-záéíóúñ]/.test(errores[k]) ? `${etiqueta} ${errores[k]}` : errores[k]}</div>}
+    </div>
+  )
+
+  return (
+    <form className="tarjeta" style={{ padding: 20, maxWidth: 560 }} onSubmit={guardar} noValidate>
+      <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Complete sus datos</h2>
+      <p style={{ fontSize: 13.5, color: "var(--texto-3)", marginBottom: 16 }}>
+        Solo una vez. Quedarán asociados a su correo <b>{correo}</b> y aquí verá sus reservas.
+      </p>
+      <fieldset disabled={enviando} style={{ border: "none" }}>
+        <div className="form-grid">
+          <div className="ancho">{campo("nombre", "Nombre completo", true)}</div>
+          {campo("documento", "Documento", true)}
+          {campo("telefono", "Teléfono")}
+        </div>
+      </fieldset>
+      {error && <div className="aviso aviso-error" role="alert">{error}</div>}
+      <button className="btn btn-pri" type="submit" disabled={enviando} style={{ marginTop: 16 }}>
+        {enviando ? <><span className="spinner" aria-hidden="true" />Guardando...</> : "Guardar mis datos"}
+      </button>
+    </form>
   )
 }
 

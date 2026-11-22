@@ -4,6 +4,7 @@
 |--------------------------------|------------------------------------------|-----------------------|
 | GET    /api/huespedes?buscar=  | recepcionista, admin                     | 200                   |
 | GET    /api/huespedes/yo       | huésped (su propia ficha, por su correo) | 200, 404              |
+| POST   /api/huespedes/yo       | huésped sin ficha (completa sus datos)   | 201, 400, 409         |
 | GET    /api/huespedes/{id}     | recepcionista, admin; huésped solo la suya | 200, 403, 404       |
 | POST   /api/huespedes          | recepcionista, admin                     | 201, 400, 409         |
 | PUT    /api/huespedes/{id}     | recepcionista, admin                     | 200, 400, 404, 409    |
@@ -14,10 +15,10 @@ Interfaz -> API (este archivo) -> GestionHuespedesService -> MongoHuespedReposit
 """
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from app.api.esquemas import ErrorSalida, HuespedEntrada, HuespedSalida
+from app.api.esquemas import ErrorSalida, HuespedEntrada, HuespedSalida, MiFichaEntrada
 from app.api.seguridad import ROLES_PERSONAL, Usuario, requiere_rol, usuario_actual
 from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios
-from app.services.errores import NoEncontradoError, SinPermisoError
+from app.services.errores import DatoDuplicadoError, NoEncontradoError, SinPermisoError
 from app.services.huespedes import DatosHuesped, GestionHuespedesService
 
 router = APIRouter(prefix="/api/huespedes", tags=["Huéspedes (CRUD, semana 15)"])
@@ -59,6 +60,19 @@ def mi_ficha(usuario: Usuario = Depends(usuario_actual), s: GestionHuespedesServ
     h = s.obtener_por_correo(usuario.correo)
     if h is None:
         raise NoEncontradoError("Su cuenta no está asociada a ningún huésped registrado.")
+    return HuespedSalida.desde(h)
+
+
+@router.post("/yo", response_model=HuespedSalida, status_code=201, summary="Completar mi ficha (huésped)",
+             responses=_errores(400, 401, 403, 409, 503))
+def crear_mi_ficha(entrada: MiFichaEntrada, usuario: Usuario = Depends(usuario_actual),
+                   s: GestionHuespedesService = Depends(servicio)):
+    """Para cuentas de huésped creadas antes de que el registro creara la ficha."""
+    if usuario.es_personal:
+        raise SinPermisoError("Esta opción es solo para cuentas de huésped.")
+    if s.obtener_por_correo(usuario.correo):
+        raise DatoDuplicadoError("Su cuenta ya tiene sus datos registrados.")
+    h = s.asegurar_ficha_propia(usuario.correo, entrada.nombre, entrada.documento, entrada.telefono, entrada.nacionalidad)
     return HuespedSalida.desde(h)
 
 
