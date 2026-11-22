@@ -106,6 +106,11 @@ en el panel del personal. La habitación exacta la asigna el backend (la libre d
 Para cuentas reales del personal: `python -m scripts.crear_usuario --email ... --rol recepcionista`
 (pide la contraseña sin mostrarla).
 
+**Producción (Atlas):** no use `reset_db` (borra datos). Al arrancar, el backend prepara solo la base
+del corte sin borrar nada: crea colecciones, validadores e índices que falten y carga los 3 tipos y las
+24 habitaciones si no existen (sin huéspedes ni reservas de prueba). Lo mismo, a mano:
+`python -m scripts.preparar_base`.
+
 ## 5. Pasos para repetir la prueba
 
 **Automática (backend y base):**

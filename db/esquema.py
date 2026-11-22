@@ -119,7 +119,31 @@ def crear_esquema(db: Database) -> None:
     for nombre, validador in VALIDADORES.items():
         db.create_collection(nombre, validator=validador, validationLevel="strict", validationAction="error")
     db.create_collection("contadores")
+    crear_indices(db)
 
+
+def asegurar_esquema(db: Database) -> list[str]:
+    """Versión NO destructiva de crear_esquema (para producción).
+
+    Crea las colecciones que falten, aplica los validadores a las que ya existen (sin tocar sus
+    documentos) y crea los índices que falten. Nunca borra colecciones ni documentos.
+    Devuelve la lista de cambios hechos."""
+    cambios = []
+    existentes = set(db.list_collection_names())
+    for nombre, validador in VALIDADORES.items():
+        if nombre not in existentes:
+            db.create_collection(nombre, validator=validador, validationLevel="strict", validationAction="error")
+            cambios.append(f"colección {nombre} creada")
+        else:
+            db.command("collMod", nombre, validator=validador, validationLevel="strict", validationAction="error")
+    if "contadores" not in existentes:
+        db.create_collection("contadores")
+        cambios.append("colección contadores creada")
+    crear_indices(db)  # create_index no hace nada si el índice ya existe
+    return cambios
+
+
+def crear_indices(db: Database) -> None:
     db.tipos_habitacion.create_index("nombre", unique=True, name="ux_tipo_nombre")
     db.habitaciones.create_index("numero", unique=True, name="ux_habitacion_numero")
     db.habitaciones.create_index("id_tipo", name="ix_habitacion_tipo")

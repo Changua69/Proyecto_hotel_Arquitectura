@@ -41,17 +41,31 @@ RESERVAS = [
 ]
 
 
+def _docs_habitaciones() -> list[dict]:
+    # 1xx Estándar, 2xx Familiar, 3xx Suite
+    return [{"_id": i, "numero": n, "id_tipo": int(n[0]), "estado": "LIBRE"} for i, n in enumerate(HABITACIONES, start=1)]
+
+
+def cargar_catalogo_si_falta(db: Database) -> list[str]:
+    """Producción: carga tipos y habitaciones SOLO si sus colecciones están vacías.
+    No agrega huéspedes ni reservas de prueba y nunca borra nada."""
+    cambios = []
+    if db.tipos_habitacion.count_documents({}, limit=1) == 0:
+        db.tipos_habitacion.insert_many([{**t, "tarifa_noche": a_dinero_bson(t["tarifa_noche"])} for t in TIPOS])
+        cambios.append(f"{len(TIPOS)} tipos de habitación cargados")
+    if db.habitaciones.count_documents({}, limit=1) == 0:
+        db.habitaciones.insert_many(_docs_habitaciones())
+        cambios.append(f"{len(HABITACIONES)} habitaciones cargadas")
+    return cambios
+
+
 def cargar_datos(db: Database) -> None:
     db.tipos_habitacion.insert_many(
         [{**t, "tarifa_noche": a_dinero_bson(t["tarifa_noche"])} for t in TIPOS]
     )
 
-    id_por_numero = {}
-    docs = []
-    for i, numero in enumerate(HABITACIONES, start=1):
-        id_tipo = int(numero[0])  # 1xx Estándar, 2xx Familiar, 3xx Suite
-        docs.append({"_id": i, "numero": numero, "id_tipo": id_tipo, "estado": "LIBRE"})
-        id_por_numero[numero] = i
+    docs = _docs_habitaciones()
+    id_por_numero = {d["numero"]: d["_id"] for d in docs}
     db.habitaciones.insert_many(docs)
 
     db.huespedes.insert_many(HUESPEDES)

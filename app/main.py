@@ -59,4 +59,14 @@ def startup_event():
     # Es seguro ejecutarlo al iniciar: solo crea habitaciones faltantes.
     init_rooms()
     auth.asegurar_email_unico()  # no se repiten correos de usuarios
+    # Semana 15: la base del corte queda lista (tipos y habitaciones) aunque nadie haya corrido
+    # reset_db en producción. No destructivo: no borra nada ni carga datos de prueba.
+    try:
+        from scripts.preparar_base import preparar
+
+        cambios = preparar(verbose=False)
+        if cambios:
+            print("[startup] base del corte preparada:", "; ".join(cambios))
+    except Exception as e:  # la API sigue arrancando; /api responderá 503 si la base no está disponible
+        print(f"[startup] no se pudo preparar la base del corte: {type(e).__name__}: {e}")
 
