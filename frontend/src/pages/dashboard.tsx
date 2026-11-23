@@ -1,13 +1,94 @@
 import { useEffect, useState } from "react"
-import type { CSSProperties } from "react"
+import type { CSSProperties, FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import API from "../services/api"
+import toast from "react-hot-toast"
+import API, { describirError } from "../services/api"
 import logo from "../assets/image.ico"
+import { consultarDisponibilidad } from "../services/corte"
+import { cop, fecha, hoyISO } from "../services/formato"
+
+/*
+ * Buscador del portal (semana 15): filtra por tipo y número de huéspedes y, si hay fechas, consulta la
+ * disponibilidad REAL de cada tipo (GET /api/disponibilidad, RF-02). Las fechas elegidas pasan a la
+ * pantalla de la habitación para reservar sin volver a escribirlas.
+ */
+const TIPOS = [
+  { clave: "estandar", id: 1, nombre: "Estándar" },
+  { clave: "familiar", id: 2, nombre: "Familiar" },
+  { clave: "suite", id: 3, nombre: "Suite" },
+]
+const claveTipo = (t: string) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+type InfoTipo = { libres: number; tarifa: number; noches: number } | { error: string }
+interface Busqueda { entrada: string; salida: string; personas: number; tipo: string }
 
 function Dashboard() {
   const [user, setUser] = useState<any>(null)
   const [rooms, setRooms] = useState<any[]>([])
   const navigate = useNavigate()
+
+  // Formulario del buscador y búsqueda aplicada
+  const [entrada, setEntrada] = useState("")
+  const [salida, setSalida] = useState("")
+  const [personas, setPersonas] = useState(1)
+  const [tipo, setTipo] = useState("todas")
+  const [aplicada, setAplicada] = useState<Busqueda | null>(null)
+  const [porTipo, setPorTipo] = useState<Record<string, InfoTipo>>({})
+  const [buscando, setBuscando] = useState(false)
+
+  const buscar = async (e?: FormEvent) => {
+    e?.preventDefault()
+    if (buscando) return
+    if ((entrada && !salida) || (!entrada && salida)) { toast.error("Elige las dos fechas, o ninguna"); return }
+    if (entrada && salida <= entrada) { toast.error("La salida debe ser posterior a la entrada"); return }
+    if (entrada && entrada < hoyISO()) { toast.error("La entrada no puede ser anterior a hoy"); return }
+
+    const b: Busqueda = { entrada, salida, personas, tipo }
+    const tipos = TIPOS.filter(t => tipo === "todas" || t.clave === tipo)
+    setPorTipo({})
+    if (!entrada) { setAplicada(b); return }
+
+    setBuscando(true)
+    try {
+      const resultados = await Promise.all(tipos.map(async t => {
+        try {
+          const d = await consultarDisponibilidad({ id_tipo: t.id, fecha_entrada: entrada, fecha_salida: salida, personas })
+          return [t.clave, { libres: d.habitaciones_disponibles.length, tarifa: d.tarifa_noche, noches: d.noches }] as const
+        } catch (err) {
+          const info = describirError(err)
+          if (info.tipo === "red" || info.tipo === "servidor") throw err
+          return [t.clave, { error: info.mensaje }] as const // p. ej. 422: el tipo no admite tantas personas
+        }
+      }))
+      setPorTipo(Object.fromEntries(resultados))
+      setAplicada(b)
+    } catch (err) {
+      setAplicada(null) // sin datos viejos: si falla, no se muestra una disponibilidad anterior
+      toast.error(describirError(err).mensaje)
+    } finally {
+      setBuscando(false)
+    }
+  }
+
+  const limpiar = () => {
+    setEntrada(""); setSalida(""); setPersonas(1); setTipo("todas"); setAplicada(null); setPorTipo({})
+  }
+
+  const visibles = rooms.filter((r: any) => {
+    if (!aplicada) return true
+    const clave = claveTipo(r.type)
+    if (aplicada.tipo !== "todas" && clave !== aplicada.tipo) return false
+    const info = porTipo[clave]
+    if (aplicada.entrada) return !!info && !("error" in info) && info.libres > 0
+    return (r.capacity || 0) >= aplicada.personas
+  })
+
+  const irAHabitacion = (numero: number) => {
+    const q = aplicada?.entrada
+      ? `?entrada=${aplicada.entrada}&salida=${aplicada.salida}&personas=${aplicada.personas}`
+      : ""
+    navigate(`/rooms/${numero}${q}`)
+  }
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -71,57 +152,88 @@ function Dashboard() {
         <p style={{ margin: "0 0 1rem", fontSize: "12px", color: "#888" }}>
           Encuentra la habitación perfecta para tu estancia
         </p>
-        <div style={searchGrid}>
+        <form style={searchGrid} onSubmit={buscar}>
           <div>
             <label style={searchLabel}>Check-in</label>
-            <input type="date" style={searchInput} />
+            <input type="date" style={searchInput} min={hoyISO()} value={entrada} onChange={e => setEntrada(e.target.value)} />
           </div>
           <div>
             <label style={searchLabel}>Check-out</label>
-            <input type="date" style={searchInput} />
+            <input type="date" style={searchInput} min={entrada || hoyISO()} value={salida} onChange={e => setSalida(e.target.value)} />
           </div>
           <div>
             <label style={searchLabel}>Huéspedes</label>
-            <select style={searchInput}>
-              <option>1 Huésped</option>
-              <option>2 Huéspedes</option>
-              <option>3 Huéspedes</option>
-              <option>4+ Huéspedes</option>
+            <select style={searchInput} value={personas} onChange={e => setPersonas(Number(e.target.value))}>
+              <option value={1}>1 Huésped</option>
+              <option value={2}>2 Huéspedes</option>
+              <option value={3}>3 Huéspedes</option>
+              <option value={4}>4 Huéspedes</option>
             </select>
           </div>
           <div>
             <label style={searchLabel}>Tipo de Habitación</label>
-            <select style={searchInput}>
-              <option>Todas</option>
-              <option>Estándar</option>
-              <option>Suite</option>
-              <option>Familiar</option>
+            <select style={searchInput} value={tipo} onChange={e => setTipo(e.target.value)}>
+              <option value="todas">Todas</option>
+              <option value="estandar">Estándar</option>
+              <option value="familiar">Familiar</option>
+              <option value="suite">Suite</option>
             </select>
           </div>
-          <button style={searchBtn}>
+          <button type="submit" style={{ ...searchBtn, opacity: buscando ? 0.6 : 1 }} disabled={buscando}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            Buscar
+            {buscando ? "Buscando..." : "Buscar"}
           </button>
-        </div>
+        </form>
+
+        {aplicada && (
+          <div style={resumenBusqueda}>
+            <span>
+              {aplicada.entrada
+                ? <>Del <b>{fecha(aplicada.entrada)}</b> al <b>{fecha(aplicada.salida)}</b> · {aplicada.personas} huésped(es): </>
+                : <>{aplicada.personas} huésped(es){aplicada.tipo !== "todas" ? ` · ${TIPOS.find(t => t.clave === aplicada.tipo)?.nombre}` : ""} (elige fechas para ver disponibilidad)</>}
+              {aplicada.entrada && TIPOS.filter(t => porTipo[t.clave]).map(t => {
+                const info = porTipo[t.clave]
+                return (
+                  <span key={t.clave} style={{ marginRight: 12 }}>
+                    {t.nombre}: {"error" in info
+                      ? <span style={{ color: "#b91c1c" }}>no admite {aplicada.personas} personas</span>
+                      : info.libres > 0
+                        ? <span style={{ color: "#15803d" }}>{info.libres} libre(s) · {cop(info.tarifa)}/noche</span>
+                        : <span style={{ color: "#a16207" }}>sin disponibilidad</span>}
+                  </span>
+                )
+              })}
+            </span>
+            <button type="button" style={limpiarBtn} onClick={limpiar}>Limpiar filtros</button>
+          </div>
+        )}
       </div>
 
       {/* HABITACIONES */}
       <div style={container}>
         <h2 style={{ fontSize: "18px", fontWeight: 500, margin: "0 0 1.5rem", color: "#111" }}>
-          Habitaciones Disponibles
+          Habitaciones Disponibles{aplicada ? ` (${visibles.length})` : ""}
         </h2>
+        {aplicada && visibles.length === 0 && (
+          <p style={{ color: "#888", fontSize: 14 }}>No hay habitaciones que cumplan esos filtros. Prueba otras fechas, otro tipo o menos huéspedes.</p>
+        )}
         <div style={roomGrid}>
-          {Array.isArray(rooms) && rooms.map((room) => (
-            <div key={room.number} style={roomCard} onClick={() => navigate(`/rooms/${room.number}`)}>
+          {Array.isArray(rooms) && visibles.map((room) => (
+            <div key={room.number} style={roomCard} onClick={() => irAHabitacion(room.number)}>
               <div style={imgWrapper}>
                 <img
                   src={room.images?.[0] || room.image || "https://via.placeholder.com/400x200"}
                   style={roomImg}
                   alt={room.type}
                 />
-                <span style={badge}>{room.status || "Disponible"}</span>
+                <span style={badge}>
+                  {(() => {
+                    const info = porTipo[claveTipo(room.type)]
+                    return aplicada?.entrada && info && !("error" in info) ? `${info.libres} libre(s)` : (room.status || "Disponible")
+                  })()}
+                </span>
               </div>
               <div style={{ padding: "1rem" }}>
                 <p style={{ margin: "0", fontWeight: 500, fontSize: "15px", color: "#111" }}>{room.type}</p>
@@ -149,12 +261,15 @@ function Dashboard() {
                 </div>
 
                 <p style={priceText}>
-                  ${room.price?.toLocaleString("es-CO")} COP{" "}
+                  {(() => {
+                    const info = porTipo[claveTipo(room.type)]
+                    return info && !("error" in info) ? cop(info.tarifa) : `$${room.price?.toLocaleString("es-CO")}`
+                  })()} COP{" "}
                   <span style={{ fontSize: "12px", fontWeight: 400, color: "#888" }}>/noche</span>
                 </p>
                 <button
                   style={reserveBtn}
-                  onClick={e => { e.stopPropagation(); navigate(`/rooms/${room.number}`) }}
+                  onClick={e => { e.stopPropagation(); irAHabitacion(room.number) }}
                 >
                   Reservar Ahora
                 </button>
@@ -204,6 +319,15 @@ const searchBtn: CSSProperties = {
   color: "white", border: "none", borderRadius: "8px",
   fontSize: "13px", fontWeight: 500, cursor: "pointer",
   display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" as const
+}
+const resumenBusqueda: CSSProperties = {
+  marginTop: "12px", padding: "10px 14px", background: "#f8fafc", border: "1px solid #e5e7eb",
+  borderRadius: "8px", fontSize: "13px", color: "#333", display: "flex", justifyContent: "space-between",
+  alignItems: "center", gap: "12px", flexWrap: "wrap"
+}
+const limpiarBtn: CSSProperties = {
+  padding: "6px 12px", border: "1px solid #e0e0e0", borderRadius: "6px", background: "white",
+  fontSize: "12px", cursor: "pointer", color: "#555"
 }
 const container: CSSProperties = {
   padding: "2rem", width: "100%", boxSizing: "border-box"

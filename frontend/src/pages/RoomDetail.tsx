@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import type { CSSProperties } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"
+import ReservaConfirmada from "../components/ReservaConfirmada"
+import "../styles/app.css"
 import logo from "../assets/image.ico"
 import toast from "react-hot-toast"
 import API, { describirError } from "../services/api"
@@ -24,9 +26,12 @@ function RoomDetail() {
   const sesion = leerSesion()
   const [room, setRoom] = useState<any>(null)
 
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
-  const [personas, setPersonas] = useState(1)
+  // Fechas y personas que vienen del buscador del portal (?entrada=&salida=&personas=)
+  const [params] = useSearchParams()
+  const [checkIn, setCheckIn] = useState(params.get("entrada") ?? "")
+  const [checkOut, setCheckOut] = useState(params.get("salida") ?? "")
+  const [personas, setPersonas] = useState(Math.max(1, Number(params.get("personas")) || 1))
+  const [ventana, setVentana] = useState<Reserva | null>(null)
   const [disp, setDisp] = useState<{ fase: "nada" | "curso" | "ok" | "error"; datos?: Disponibilidad; error?: string }>({ fase: "nada" })
   const [enviando, setEnviando] = useState(false)
   const [reserva, setReserva] = useState<Reserva | null>(null)
@@ -88,7 +93,7 @@ function RoomDetail() {
         fecha_entrada: checkIn, fecha_salida: checkOut, numero_personas: personas,
       })
       setReserva(r) // 201: el backend ya la guardó
-      toast.success(`Reserva #${r.id_reserva} confirmada`)
+      setVentana(r) // ventana de confirmación con el código real
     } catch (e) {
       toast.error(describirError(e).mensaje) // 409 sin disponibilidad, 422 capacidad, 400 fechas, red...
     } finally {
@@ -205,7 +210,7 @@ function RoomDetail() {
               <div style={{ marginBottom: "1.5rem" }}>
                 <label style={fieldLabel}>Huéspedes</label>
                 <select style={fieldInput} value={personas} onChange={e => { const v = Number(e.target.value); cambiar(() => setPersonas(v)) }}>
-                  {[...Array(room.capacity || 2)].map((_, i) => (
+                  {[...Array(Math.max(room.capacity || 2, personas))].map((_, i) => (
                     <option key={i} value={i + 1}>{i + 1} {i === 0 ? "Huésped" : "Huéspedes"}</option>
                   ))}
                 </select>
@@ -244,6 +249,11 @@ function RoomDetail() {
           </div>
         </div>
       </div>
+      <ReservaConfirmada
+        reserva={ventana}
+        onCerrar={() => setVentana(null)}
+        onVerMisReservas={() => navigate("/mis-reservas")}
+      />
     </div>
   )
 }
