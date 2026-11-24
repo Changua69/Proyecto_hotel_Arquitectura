@@ -4,7 +4,7 @@
 |---------------------------------------------|-----------------------------|
 | GET    /api/panel/resumen                   | recepcionista, admin        |
 | GET    /api/reservas?estado&desde&hasta     | personal: todas; huésped: solo las suyas |
-| POST   /api/reservas/{id}/cancelar          | personal; huésped: las suyas, hasta el día antes |
+| POST   /api/reservas/{id}/cancelar          | personal; huésped: las suyas (CONFIRMADAS)  |
 | POST   /api/reservas/{id}/checkin · checkout | recepcionista, admin        |
 | GET    /api/reportes/ventas?desde&hasta     | admin (JSON para la pantalla) |
 | GET    /api/reportes/ventas.pdf?desde&hasta | admin (descarga en PDF)     |
@@ -187,7 +187,7 @@ def listar_reservas(
              responses=_errores(400, 401, 403, 404, 409, 503))
 def cancelar(id_reserva: int = Path(gt=0), usuario: Usuario = Depends(usuario_actual),
              p: ProveedorRepositorios = Depends(proveedor)):
-    """Personal: cualquier reserva CONFIRMADA. Huésped: solo las suyas y hasta el día anterior a la llegada."""
+    """Personal: cualquier reserva CONFIRMADA. Huésped: solo las suyas, mientras sigan CONFIRMADAS."""
     solo_de = None
     if not usuario.es_personal:
         ficha = GestionHuespedesService(p).obtener_por_correo(usuario.correo)

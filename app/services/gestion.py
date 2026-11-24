@@ -9,6 +9,8 @@ from datetime import date, timedelta
 from decimal import Decimal
 from typing import Callable
 
+from app.services.reloj import hoy_hotel
+
 from app.persistence.errors import DatosInvalidosError as DatosRechazadosPorBD
 from app.persistence.errors import DuplicadoError
 from app.persistence.models import ReservaFila, TipoHabitacion, Usuario
@@ -76,7 +78,7 @@ class ResumenPanel:
 
 
 class PanelService:
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel):
         self._p, self._hoy = proveedor, hoy
 
     def resumen(self) -> ResumenPanel:
@@ -107,7 +109,7 @@ class PanelService:
 
 # ------------------------------------------------------------------ reservas (gestión)
 class GestionReservasService:
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel):
         self._p, self._hoy = proveedor, hoy
 
     def listar(self, estado: str | None = None, desde: date | None = None, hasta: date | None = None,
@@ -157,8 +159,8 @@ class GestionReservasService:
     def cancelar(self, id_reserva: int, solo_del_huesped: int | None = None) -> None:
         """Cancela una reserva CONFIRMADA (queda en el historial como CANCELADA; no se borra).
 
-        `solo_del_huesped`: cuando cancela el propio huésped. Solo puede cancelar SUS reservas y hasta
-        el día anterior a la llegada; el personal (None) no tiene esas restricciones.
+        `solo_del_huesped`: cuando cancela el propio huésped, solo puede cancelar SUS reservas. Puede
+        hacerlo en cualquier momento mientras siga CONFIRMADA (después del check-in ya no).
         """
         _id(id_reserva, "la reserva")
 
@@ -166,12 +168,8 @@ class GestionReservasService:
             actual = r.reservas.buscar_por_id(id_reserva)
             if actual is None:
                 raise NoEncontradoError("La reserva no existe.")
-            if solo_del_huesped is not None:
-                if actual.id_huesped != solo_del_huesped:
-                    raise SinPermisoError("Solo puede cancelar sus propias reservas.")
-                if actual.estado == "CONFIRMADA" and actual.fecha_entrada <= self._hoy():
-                    raise ReservaNoCancelableError(
-                        "Solo puede cancelar hasta el día anterior a la llegada. Comuníquese con recepción.")
+            if solo_del_huesped is not None and actual.id_huesped != solo_del_huesped:
+                raise SinPermisoError("Solo puede cancelar sus propias reservas.")
             if not r.gestion.cancelar_reserva(id_reserva):
                 raise ReservaNoCancelableError(f"La reserva está {actual.estado}; solo se cancela una CONFIRMADA.")
 
@@ -218,7 +216,7 @@ def _agrupar(filas: list[ReservaFila], clave) -> list[LineaReporte]:
 class ReporteVentasService:
     """Ventas = reservas NO canceladas cuya fecha de entrada está en [desde, hasta]."""
 
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel):
         self._p, self._hoy = proveedor, hoy
 
     def generar(self, desde: date, hasta: date) -> ReporteVentas:

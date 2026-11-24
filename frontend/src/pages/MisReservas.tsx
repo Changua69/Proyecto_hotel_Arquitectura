@@ -238,14 +238,15 @@ function Seccion({ titulo, filas, vacio, onCancelar, onModificar }: {
                   {onCancelar && (
                     <td>
                       <div className="acciones-fila">
-                        {r.estado === "CONFIRMADA" && r.fecha_entrada >= manana ? (
+                        {r.estado === "CONFIRMADA" && (
                           <>
-                            {onModificar && <button className="btn btn-texto btn-chico" onClick={() => onModificar(r)}>Modificar</button>}
+                            {/* Modificar: hasta el día anterior a la llegada. Cancelar: siempre que siga confirmada. */}
+                            {onModificar && r.fecha_entrada >= manana && (
+                              <button className="btn btn-texto btn-chico" onClick={() => onModificar(r)}>Modificar</button>
+                            )}
                             <button className="btn btn-texto btn-chico peligro" onClick={() => onCancelar(r)}>Cancelar</button>
                           </>
-                        ) : r.estado === "CONFIRMADA" ? (
-                          <span style={{ fontSize: 12, color: "var(--texto-3)" }} title="El mismo día de llegada solo se cancela en recepción">En recepción</span>
-                        ) : null}
+                        )}
                       </div>
                     </td>
                   )}

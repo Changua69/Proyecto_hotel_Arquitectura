@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Callable
 
+from app.services.reloj import hoy_hotel
+
 from app.persistence.errors import (
     DatosInvalidosError as DatosRechazadosPorBD,
     ReferenciaInexistenteError,
@@ -109,7 +111,7 @@ def tipo_con_capacidad(r: Repositorios, id_tipo: int, personas: int) -> TipoHabi
 class ConsultarDisponibilidadService:
     """RF-02. Consultar disponibilidad: habitaciones libres del tipo en el rango."""
 
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel):
         self._proveedor = proveedor
         self._hoy = hoy
 
@@ -140,7 +142,7 @@ class RegistrarReservaService:
     La respuesta se construye solo después de confirmar la transacción.
     """
 
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today, max_intentos: int = 10):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel, max_intentos: int = 10):
         self._proveedor = proveedor
         self._hoy = hoy
         self._max_intentos = max_intentos
@@ -242,7 +244,7 @@ class ModificarReservaService:
       llegada. El personal no tiene esas restricciones.
     """
 
-    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today, max_intentos: int = 10):
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = hoy_hotel, max_intentos: int = 10):
         self._proveedor = proveedor
         self._hoy = hoy
         self._max_intentos = max_intentos

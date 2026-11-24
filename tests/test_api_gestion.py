@@ -190,15 +190,37 @@ def test_huesped_no_cancela_la_de_otro_ni_sin_ficha(api):
     assert api.post("/api/reservas/3/cancelar", headers=sin_ficha).status_code == 403
 
 
-def test_huesped_no_cancela_el_dia_de_llegada():
+def test_huesped_cancela_incluso_el_dia_de_llegada_pero_no_despues_del_check_in():
     from datetime import date
 
     from app.persistence.proveedor import MongoProveedor
     from app.services.gestion import GestionReservasService, ReservaNoCancelableError
 
     servicio = GestionReservasService(MongoProveedor(), hoy=lambda: date(2026, 12, 20))  # llegada de la reserva 1
+    servicio.check_in(1)                                   # ya llegó: EN_CURSO
     with pytest.raises(ReservaNoCancelableError):
         servicio.cancelar(1, solo_del_huesped=1)
-    assert base().reservas.find_one({"_id": 1})["estado"] == "CONFIRMADA"
-    servicio.cancelar(1)  # el personal sí puede
+    servicio.check_out(1)
+
+
+def test_huesped_cancela_el_mismo_dia_de_llegada():
+    from datetime import date
+
+    from app.persistence.proveedor import MongoProveedor
+    from app.services.gestion import GestionReservasService
+
+    GestionReservasService(MongoProveedor(), hoy=lambda: date(2026, 12, 20)).cancelar(1, solo_del_huesped=1)
     assert base().reservas.find_one({"_id": 1})["estado"] == "CANCELADA"
+
+
+def test_hoy_del_hotel_usa_la_hora_de_colombia():
+    from datetime import datetime, timezone
+    from unittest import mock
+
+    from app.services import reloj
+
+    # 23 nov 2026, 7:45 p. m. en Colombia = 24 nov 00:45 en UTC (hora del servidor de Render)
+    utc = datetime(2026, 11, 24, 0, 45, tzinfo=timezone.utc)
+    with mock.patch.object(reloj, "datetime") as dt:
+        dt.now.side_effect = lambda tz=None: utc.astimezone(tz) if tz else utc
+        assert reloj.hoy_hotel().isoformat() == "2026-11-23"

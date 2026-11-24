@@ -154,7 +154,7 @@ Recorre CA-01 a CA-07, el tiempo visto por el usuario (RNF-01), 10 pantallas con
 | `GET /api/disponibilidad` | Público | 200, 400, 404, 422, 503 |
 | `POST /api/reservas` · `GET /api/reservas/{id}` | Personal: cualquier huésped · Huésped: solo para sí | 201/200, 400, 401, 403, 404, 409, 422, 503 |
 | `GET /api/reservas?estado&desde&hasta` | Personal: todas · Huésped: las suyas | 200, 400, 401 |
-| `POST /api/reservas/{id}/cancelar` | Personal · Huésped: las suyas, hasta el día antes de llegar | 204, 401, 403, 404, 409 |
+| `POST /api/reservas/{id}/cancelar` | Personal · Huésped: las suyas, mientras estén confirmadas | 204, 401, 403, 404, 409 |
 | `PUT /api/reservas/{id}` (fechas y personas) | Personal · Huésped: las suyas, hasta el día antes de llegar | 200, 400, 401, 403, 404, 409, 422 |
 | `POST /api/reservas/{id}/checkin` · `/checkout` | recepcionista, admin | 204, 401, 403, 404, 409 |
 | `GET/POST /api/huespedes`, `GET/PUT /api/huespedes/{id}` | recepcionista, admin (el huésped solo ve su ficha y `/api/huespedes/yo`) | 200/201, 400, 401, 403, 404, 409 |
