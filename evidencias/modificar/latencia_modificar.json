@@ -1,0 +1,54 @@
+{
+  "prueba": "Latencia de PUT /api/reservas/{id} y persistencia bajo carga",
+  "fecha": "2026-11-23T21:55:00",
+  "api": "http://127.0.0.1:8002",
+  "modo": "local",
+  "lectura_base": {
+    "solicitudes": 20,
+    "codigos": {
+      "200": 20
+    },
+    "min_ms": 5.9,
+    "p50_ms": 6.9,
+    "p95_ms": 7.2,
+    "max_ms": 7.3,
+    "promedio_ms": 6.8
+  },
+  "modificar_secuencial": {
+    "solicitudes": 20,
+    "codigos": {
+      "200": 20
+    },
+    "min_ms": 7.0,
+    "p50_ms": 8.9,
+    "p95_ms": 9.6,
+    "max_ms": 9.7,
+    "promedio_ms": 8.7
+  },
+  "modificar_concurrente": {
+    "solicitudes": 100,
+    "codigos": {
+      "200": 100
+    },
+    "min_ms": 16.7,
+    "p50_ms": 34.3,
+    "p95_ms": 45.0,
+    "max_ms": 53.5,
+    "promedio_ms": 34.6,
+    "usuarios": 10,
+    "por_usuario": 10,
+    "solicitudes_por_segundo": 132.4
+  },
+  "umbral_p95_ms": 2000,
+  "cumple": true,
+  "persistencia_bajo_carga": {
+    "reservas_revisadas": 11,
+    "discrepancias": [],
+    "ok": true
+  },
+  "cliente": {
+    "so": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.0",
+    "httpx": "0.28.1"
+  }
+}
