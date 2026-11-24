@@ -17,8 +17,10 @@ from app.services.errores import (
     DatoDuplicadoError,
     EntradaInvalidaError,
     ErrorNegocio,
+    EstadoReservaError,
     FechasInvalidasError,
     NoEncontradoError,
+    SinPermisoError,
 )
 
 Reloj = Callable[[], date]
@@ -105,8 +107,8 @@ class PanelService:
 
 # ------------------------------------------------------------------ reservas (gestión)
 class GestionReservasService:
-    def __init__(self, proveedor: ProveedorRepositorios):
-        self._p = proveedor
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today):
+        self._p, self._hoy = proveedor, hoy
 
     def listar(self, estado: str | None = None, desde: date | None = None, hasta: date | None = None,
                id_huesped: int | None = None) -> list[ReservaFila]:
@@ -115,13 +117,61 @@ class GestionReservasService:
         _rango(desde, hasta)
         return self._p.leer(lambda r: r.gestion.listar_reservas(estado, desde, hasta, id_huesped))
 
-    def cancelar(self, id_reserva: int) -> None:
+    def check_in(self, id_reserva: int) -> None:
+        """Llegada del huésped: CONFIRMADA -> EN_CURSO (habitación OCUPADA).
+        Solo desde el día de entrada y antes del día de salida."""
+        _id(id_reserva, "la reserva")
+        hoy = self._hoy()
+
+        def caso(r):
+            actual = r.reservas.buscar_por_id(id_reserva)
+            if actual is None:
+                raise NoEncontradoError("La reserva no existe.")
+            if actual.estado != "CONFIRMADA":
+                raise EstadoReservaError(f"La reserva está {actual.estado}; el check-in se hace a una CONFIRMADA.")
+            if hoy < actual.fecha_entrada:
+                raise EstadoReservaError(f"La llegada es el {actual.fecha_entrada.isoformat()}; todavía no se puede hacer check-in.")
+            if hoy >= actual.fecha_salida:
+                raise EstadoReservaError("La fecha de salida ya pasó; no se puede hacer check-in.")
+            if not r.gestion.cambiar_estado_reserva(id_reserva, "CONFIRMADA", "EN_CURSO", "OCUPADA"):
+                raise EstadoReservaError("La reserva cambió de estado; actualice e intente de nuevo.")
+
+        self._p.escribir(caso)
+
+    def check_out(self, id_reserva: int) -> None:
+        """Salida del huésped: EN_CURSO -> FINALIZADA (habitación LIBRE).
+        Si sale antes de la fecha prevista, las noches restantes quedan libres para otras reservas."""
         _id(id_reserva, "la reserva")
 
         def caso(r):
             actual = r.reservas.buscar_por_id(id_reserva)
             if actual is None:
                 raise NoEncontradoError("La reserva no existe.")
+            if actual.estado != "EN_CURSO":
+                raise EstadoReservaError(f"La reserva está {actual.estado}; el check-out se hace a una EN CURSO.")
+            if not r.gestion.cambiar_estado_reserva(id_reserva, "EN_CURSO", "FINALIZADA", "LIBRE"):
+                raise EstadoReservaError("La reserva cambió de estado; actualice e intente de nuevo.")
+
+        self._p.escribir(caso)
+
+    def cancelar(self, id_reserva: int, solo_del_huesped: int | None = None) -> None:
+        """Cancela una reserva CONFIRMADA (queda en el historial como CANCELADA; no se borra).
+
+        `solo_del_huesped`: cuando cancela el propio huésped. Solo puede cancelar SUS reservas y hasta
+        el día anterior a la llegada; el personal (None) no tiene esas restricciones.
+        """
+        _id(id_reserva, "la reserva")
+
+        def caso(r):
+            actual = r.reservas.buscar_por_id(id_reserva)
+            if actual is None:
+                raise NoEncontradoError("La reserva no existe.")
+            if solo_del_huesped is not None:
+                if actual.id_huesped != solo_del_huesped:
+                    raise SinPermisoError("Solo puede cancelar sus propias reservas.")
+                if actual.estado == "CONFIRMADA" and actual.fecha_entrada <= self._hoy():
+                    raise ReservaNoCancelableError(
+                        "Solo puede cancelar hasta el día anterior a la llegada. Comuníquese con recepción.")
             if not r.gestion.cancelar_reserva(id_reserva):
                 raise ReservaNoCancelableError(f"La reserva está {actual.estado}; solo se cancela una CONFIRMADA.")
 

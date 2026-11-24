@@ -40,6 +40,17 @@ class ReservaEntrada(BaseModel):
     numero_personas: int = Field(ge=1, description="No puede superar la capacidad del tipo")
 
 
+class ReservaCambio(BaseModel):
+    """Cuerpo de PUT /api/reservas/{id} (semana 15). El tipo de habitación no cambia."""
+
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"example": {
+        "fecha_entrada": "2026-12-21", "fecha_salida": "2026-12-24", "numero_personas": 2}})
+
+    fecha_entrada: date = Field(description="AAAA-MM-DD; no anterior a hoy")
+    fecha_salida: date = Field(description="AAAA-MM-DD; posterior a la entrada")
+    numero_personas: int = Field(ge=1, description="No puede superar la capacidad del tipo")
+
+
 # ------------------------------------------------------------------ salida
 class HabitacionLibre(BaseModel):
     id_habitacion: int

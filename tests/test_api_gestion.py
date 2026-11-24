@@ -70,7 +70,7 @@ def test_cancelar_libera_la_habitacion(api):
     r = api.post("/api/reservas/1/cancelar", headers=RECEP)  # ya cancelada
     assert r.status_code == 409 and r.json()["codigo"] == "RESERVA_NO_CANCELABLE"
     assert api.post("/api/reservas/999/cancelar", headers=RECEP).status_code == 404
-    assert api.post("/api/reservas/3/cancelar", headers=ANA).status_code == 403
+    assert api.post("/api/reservas/3/cancelar", headers=ANA).status_code == 403  # reserva de Laura
 
 
 # ------------------------------------------------------------------ reporte de ventas
@@ -170,3 +170,35 @@ def test_mis_reservas_cuenta_sin_ficha(api):
     sin_ficha = token("huesped", "nadie@correo.com")
     assert api.get("/api/huespedes/yo", headers=sin_ficha).status_code == 404
     assert api.get("/api/reservas", headers=sin_ficha).json() == []
+
+
+# ------------------------------------------------------------------ el huésped cancela sus reservas
+def test_huesped_cancela_su_reserva_y_queda_en_historial(api):
+    r = api.post("/api/reservas/1/cancelar", headers=ANA)  # reserva de Ana, 20-23 dic 2026
+    assert r.status_code == 204
+    assert base().reservas.find_one({"_id": 1})["estado"] == "CANCELADA"   # no se borra
+    filas = api.get("/api/reservas", headers=ANA).json()
+    assert [(f["id_reserva"], f["estado"]) for f in filas] == [(1, "CANCELADA")]
+    again = api.post("/api/reservas/1/cancelar", headers=ANA)
+    assert again.status_code == 409 and again.json()["codigo"] == "RESERVA_NO_CANCELABLE"
+
+
+def test_huesped_no_cancela_la_de_otro_ni_sin_ficha(api):
+    assert api.post("/api/reservas/3/cancelar", headers=ANA).json()["codigo"] == "SIN_PERMISO"
+    assert base().reservas.find_one({"_id": 3})["estado"] == "CONFIRMADA"
+    sin_ficha = token("huesped", "nadie@correo.com")
+    assert api.post("/api/reservas/3/cancelar", headers=sin_ficha).status_code == 403
+
+
+def test_huesped_no_cancela_el_dia_de_llegada():
+    from datetime import date
+
+    from app.persistence.proveedor import MongoProveedor
+    from app.services.gestion import GestionReservasService, ReservaNoCancelableError
+
+    servicio = GestionReservasService(MongoProveedor(), hoy=lambda: date(2026, 12, 20))  # llegada de la reserva 1
+    with pytest.raises(ReservaNoCancelableError):
+        servicio.cancelar(1, solo_del_huesped=1)
+    assert base().reservas.find_one({"_id": 1})["estado"] == "CONFIRMADA"
+    servicio.cancelar(1)  # el personal sí puede
+    assert base().reservas.find_one({"_id": 1})["estado"] == "CANCELADA"

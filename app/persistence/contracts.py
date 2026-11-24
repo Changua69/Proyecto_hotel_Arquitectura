@@ -59,6 +59,11 @@ class ReservaRepo(Protocol):
     def buscar_por_id(self, id_reserva: int) -> Reserva | None:
         """RF-04 (confirmación): recupera la reserva o None si no existe."""
 
+    def modificar(self, id_reserva: int, id_habitacion: int, entrada: date, salida: date,
+                  personas: int, total) -> bool:
+        """Semana 15: cambia fechas/personas (y habitación si hace falta) de una reserva CONFIRMADA.
+        False si ya no está CONFIRMADA. Lanza SolapeReservaError si la habitación quedó ocupada."""
+
 
 class GestionRepo(Protocol):
     """Consultas del panel del personal, administración y reportes (semana 15)."""
@@ -67,6 +72,10 @@ class GestionRepo(Protocol):
                         hasta: date | None = None, id_huesped: int | None = None,
                         limite: int = 500) -> list[ReservaFila]:
         """Reservas con fecha de entrada en [desde, hasta], las más recientes primero."""
+
+    def cambiar_estado_reserva(self, id_reserva: int, de: str, a: str, estado_habitacion: str | None = None) -> bool:
+        """Check-in (CONFIRMADA -> EN_CURSO) y check-out (EN_CURSO -> FINALIZADA).
+        False si la reserva no estaba en el estado `de`."""
 
     def cancelar_reserva(self, id_reserva: int) -> bool:
         """CONFIRMADA -> CANCELADA. False si no estaba CONFIRMADA (o no existe)."""

@@ -4,11 +4,12 @@ import { Link } from "react-router-dom"
 import toast from "react-hot-toast"
 import StaffLayout from "../components/StaffLayout"
 import ConfirmDialog from "../components/ConfirmDialog"
+import ModificarReserva from "../components/ModificarReserva"
 import { describirError } from "../services/api"
 import { useCarga } from "../hooks/useCarga"
-import { cancelarReserva, listarReservas } from "../services/gestion"
+import { cancelarReserva, checkIn, checkOut, listarReservas } from "../services/gestion"
 import type { ReservaFila } from "../services/gestion"
-import { cop, ESTADO_CHIP, ESTADO_TEXTO, fecha } from "../services/formato"
+import { cop, ESTADO_CHIP, ESTADO_TEXTO, fecha, hoyISO } from "../services/formato"
 
 /* Listado de reservas con filtros y cancelación (personal). */
 
@@ -20,6 +21,27 @@ export default function Reservas() {
   const [cancelar, setCancelar] = useState<ReservaFila | null>(null)
   const [procesando, setProcesando] = useState(false)
   const [errorCancelar, setErrorCancelar] = useState<string | null>(null)
+  const [modificar, setModificar] = useState<ReservaFila | null>(null)
+  // Check-in / check-out (llegada y salida del huésped)
+  const [estadia, setEstadia] = useState<{ r: ReservaFila; accion: "checkin" | "checkout" } | null>(null)
+  const [errorEstadia, setErrorEstadia] = useState<string | null>(null)
+  const hoy = hoyISO()
+
+  const confirmarEstadia = async () => {
+    if (!estadia || procesando) return
+    setProcesando(true); setErrorEstadia(null)
+    try {
+      if (estadia.accion === "checkin") await checkIn(estadia.r.id_reserva)
+      else await checkOut(estadia.r.id_reserva)
+      toast.success(`Reserva #${estadia.r.id_reserva}: ${estadia.accion === "checkin" ? "check-in registrado" : "check-out registrado"}`)
+      setEstadia(null)
+      recargar()
+    } catch (e) {
+      setErrorEstadia(describirError(e).mensaje)
+    } finally {
+      setProcesando(false)
+    }
+  }
 
   const [carga, recargar] = useCarga(() => listarReservas(aplicados), [aplicados])
 
@@ -98,6 +120,15 @@ export default function Reservas() {
                     <td className="num">{cop(r.total)}</td>
                     <td><span className={`chip ${ESTADO_CHIP[r.estado]}`}>{ESTADO_TEXTO[r.estado]}</span></td>
                     <td><div className="acciones-fila">
+                      {r.estado === "CONFIRMADA" && r.fecha_entrada <= hoy && hoy < r.fecha_salida && (
+                        <button className="btn btn-texto btn-chico" onClick={() => { setErrorEstadia(null); setEstadia({ r, accion: "checkin" }) }}>Check-in</button>
+                      )}
+                      {r.estado === "EN_CURSO" && (
+                        <button className="btn btn-texto btn-chico" onClick={() => { setErrorEstadia(null); setEstadia({ r, accion: "checkout" }) }}>Check-out</button>
+                      )}
+                      {r.estado === "CONFIRMADA" && (
+                        <button className="btn btn-texto btn-chico" onClick={() => setModificar(r)}>Modificar</button>
+                      )}
                       {r.estado === "CONFIRMADA" && (
                         <button className="btn btn-texto btn-chico peligro" onClick={() => { setErrorCancelar(null); setCancelar(r) }}>Cancelar</button>
                       )}
@@ -121,6 +152,21 @@ export default function Reservas() {
         error={errorCancelar}
         onConfirmar={confirmar}
         onCancelar={() => { if (!procesando) setCancelar(null) }}
+      />
+      <ModificarReserva reserva={modificar} onCerrar={() => setModificar(null)} onListo={() => { setModificar(null); recargar() }} />
+
+      <ConfirmDialog
+        abierto={estadia !== null}
+        titulo={estadia?.accion === "checkin" ? "Registrar llegada (check-in)" : "Registrar salida (check-out)"}
+        mensaje={estadia && (estadia.accion === "checkin"
+          ? <>¿Registrar la llegada de <b>{estadia.r.huesped}</b> a la habitación <b>{estadia.r.habitacion}</b> (reserva #{estadia.r.id_reserva})? La reserva pasa a <b>En curso</b>.</>
+          : <>¿Registrar la salida de <b>{estadia.r.huesped}</b> de la habitación <b>{estadia.r.habitacion}</b> (reserva #{estadia.r.id_reserva})? La reserva pasa a <b>Finalizada</b>{estadia.r.fecha_salida > hoy ? " y las noches que no usó quedan libres" : ""}.</>)}
+        textoConfirmar={estadia?.accion === "checkin" ? "Registrar check-in" : "Registrar check-out"}
+        textoProcesando="Guardando..."
+        procesando={procesando && estadia !== null}
+        error={errorEstadia}
+        onConfirmar={confirmarEstadia}
+        onCancelar={() => { if (!procesando) setEstadia(null) }}
       />
     </StaffLayout>
   )

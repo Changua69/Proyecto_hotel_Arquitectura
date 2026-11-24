@@ -35,6 +35,8 @@ MSG_TIPO = "El tipo de habitación no existe."
 MSG_HUESPED = "El huésped no existe."
 MSG_RESERVA = "La reserva no existe."
 MSG_SIN_DISP = "No hay habitaciones disponibles para esas fechas."
+MSG_NO_MODIFICABLE = "Solo se puede modificar una reserva CONFIRMADA (la reserva está {estado})."
+MSG_HUESPED_TARDE = "Solo puede modificar su reserva hasta el día anterior a la llegada. Comuníquese con recepción."
 
 
 # ------------------------------------------------------------------ objetos de entrada y salida
@@ -217,3 +219,87 @@ class ConsultarReservaService:
             return ReservaDetalle(reserva, huesped, habitacion, tipo)
 
         return self._proveedor.leer(caso)
+
+
+# ------------------------------------------------------------------ semana 15: modificar reserva
+@dataclass(frozen=True)
+class CambioReserva:
+    fecha_entrada: date
+    fecha_salida: date
+    numero_personas: int
+
+
+class ModificarReservaService:
+    """Cambia fechas y/o personas de una reserva CONFIRMADA (mismo tipo de habitación).
+
+    - Mismas reglas que al crear: fechas válidas (RN-03, RN-04), capacidad del tipo (RN-02) y sin
+      solapes (RN-01, garantizado por el índice único de noches).
+    - Se conserva la habitación si sigue libre en las nuevas fechas; si no, se asigna otra libre
+      del mismo tipo (la de menor número). Si no hay ninguna: 409 SIN_DISPONIBILIDAD y la reserva
+      queda como estaba.
+    - Se conserva la tarifa por noche acordada al reservar; el total se recalcula con las noches nuevas.
+    - `solo_del_huesped`: si modifica el propio huésped, solo SUS reservas y hasta el día anterior a la
+      llegada. El personal no tiene esas restricciones.
+    """
+
+    def __init__(self, proveedor: ProveedorRepositorios, hoy: Reloj = date.today, max_intentos: int = 10):
+        self._proveedor = proveedor
+        self._hoy = hoy
+        self._max_intentos = max_intentos
+
+    def modificar(self, id_reserva: int, cambio: CambioReserva, solo_del_huesped: int | None = None) -> ReservaDetalle:
+        from app.services.errores import ReservaNoModificableError, SinPermisoError
+
+        if not isinstance(id_reserva, int) or id_reserva <= 0:
+            raise EntradaInvalidaError("El id de la reserva debe ser un entero positivo.")
+        validar_fechas(cambio.fecha_entrada, cambio.fecha_salida, self._hoy())
+        descartadas: set[int] = set()
+
+        for _ in range(self._max_intentos):
+            elegida: list[int] = []
+
+            def caso(r: Repositorios) -> ReservaDetalle:
+                elegida.clear()
+                actual = r.reservas.buscar_por_id(id_reserva)
+                if actual is None:
+                    raise NoEncontradoError(MSG_RESERVA)
+                if solo_del_huesped is not None and actual.id_huesped != solo_del_huesped:
+                    raise SinPermisoError("Solo puede modificar sus propias reservas.")
+                if actual.estado != "CONFIRMADA":
+                    raise ReservaNoModificableError(MSG_NO_MODIFICABLE.format(estado=actual.estado))
+                if solo_del_huesped is not None and actual.fecha_entrada <= self._hoy():
+                    raise ReservaNoModificableError(MSG_HUESPED_TARDE)
+
+                hab_actual = r.habitaciones.obtener_por_id(actual.id_habitacion)
+                tipo = tipo_con_capacidad(r, hab_actual.id_tipo, cambio.numero_personas)
+                otras_en_su_habitacion = [
+                    x for x in r.reservas.buscar_reservas_solapadas(
+                        hab_actual.id_habitacion, cambio.fecha_entrada, cambio.fecha_salida)
+                    if x.id_reserva != id_reserva
+                ]
+                candidatas = ([hab_actual] if not otras_en_su_habitacion else []) + [
+                    h for h in r.habitaciones.buscar_libres_por_tipo_y_rango(
+                        tipo.id_tipo, cambio.fecha_entrada, cambio.fecha_salida)
+                    if h.id_habitacion != hab_actual.id_habitacion
+                ]
+                candidatas = [h for h in candidatas if h.id_habitacion not in descartadas]
+                if not candidatas:
+                    raise SinDisponibilidadError(MSG_SIN_DISP)
+                habitacion = candidatas[0]
+                elegida.append(habitacion.id_habitacion)
+                noches = (cambio.fecha_salida - cambio.fecha_entrada).days
+                if not r.reservas.modificar(id_reserva, habitacion.id_habitacion, cambio.fecha_entrada,
+                                            cambio.fecha_salida, cambio.numero_personas,
+                                            actual.tarifa_noche * noches):
+                    raise ReservaNoModificableError(MSG_NO_MODIFICABLE.format(estado="ya no CONFIRMADA"))
+                huesped = r.huespedes.obtener_por_id(actual.id_huesped)
+                return ReservaDetalle(r.reservas.buscar_por_id(id_reserva), huesped, habitacion, tipo)
+
+            try:
+                return self._proveedor.escribir(caso)
+            except SolapeReservaError:
+                descartadas.update(elegida)  # otra solicitud la tomó al mismo tiempo: probar la siguiente
+            except DatosRechazadosPorBD as e:
+                raise FechasInvalidasError(MSG_FECHAS) from e
+
+        raise SinDisponibilidadError(MSG_SIN_DISP)

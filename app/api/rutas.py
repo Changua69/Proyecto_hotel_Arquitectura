@@ -17,14 +17,16 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Path, Query, Response
 
-from app.api.esquemas import DisponibilidadSalida, ErrorSalida, ReservaEntrada, ReservaSalida
+from app.api.esquemas import DisponibilidadSalida, ErrorSalida, ReservaCambio, ReservaEntrada, ReservaSalida
 from app.api.seguridad import Usuario, usuario_actual
 from app.persistence.config import nombre_base
 from app.persistence.proveedor import MongoProveedor, ProveedorRepositorios, comprobar_conexion
 from app.services.errores import SinPermisoError
 from app.services.huespedes import GestionHuespedesService
 from app.services.reservas import (
+    CambioReserva,
     ConsultarDisponibilidadService,
+    ModificarReservaService,
     ConsultarReservaService,
     RegistrarReservaService,
     SolicitudDisponibilidad,
@@ -134,6 +136,32 @@ def consultar_reserva(
 ):
     detalle = servicio.consultar(id_reserva)
     _exigir_propio(usuario, detalle.huesped.id_huesped, p)
+    return ReservaSalida.desde(detalle)
+
+
+@router.put(
+    "/reservas/{id_reserva}",
+    response_model=ReservaSalida,
+    summary="Modificar fechas o personas de una reserva CONFIRMADA",
+    description="Mismo tipo de habitación. Conserva la habitación si sigue libre; si no, asigna otra del "
+    "mismo tipo. Se mantiene la tarifa por noche acordada y se recalcula el total. Personal: cualquier "
+    "reserva; huésped: solo las suyas y hasta el día anterior a la llegada.",
+    responses=_errores(400, 401, 403, 404, 409, 422, 503),
+)
+def modificar_reserva(
+    cambio: ReservaCambio,
+    id_reserva: int = Path(gt=0, description="Entero positivo"),
+    usuario: Usuario = Depends(usuario_actual),
+    p: ProveedorRepositorios = Depends(proveedor),
+):
+    solo_de = None
+    if not usuario.es_personal:
+        ficha = GestionHuespedesService(p).obtener_por_correo(usuario.correo)
+        if ficha is None:
+            raise SinPermisoError("Su cuenta no está asociada a un huésped registrado. Acérquese a recepción.")
+        solo_de = ficha.id_huesped
+    detalle = ModificarReservaService(p).modificar(
+        id_reserva, CambioReserva(cambio.fecha_entrada, cambio.fecha_salida, cambio.numero_personas), solo_de)
     return ReservaSalida.desde(detalle)
 
 

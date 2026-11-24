@@ -255,6 +255,31 @@ class MongoReservaRepository(_Repo):
         d = self._db.reservas.find_one({"_id": id_reserva}, session=self._s)
         return self._a_modelo(d) if d else None
 
+    def modificar(self, id_reserva: int, id_habitacion: int, entrada: date, salida: date,
+                  personas: int, total) -> bool:
+        # Se reemplazan las noches: el mismo índice único parcial (id_habitacion, noches) impide
+        # que la modificación choque con otra reserva activa, también con solicitudes simultáneas.
+        try:
+            r = self._db.reservas.update_one(
+                {"_id": id_reserva, "estado": "CONFIRMADA"},
+                {"$set": {
+                    "id_habitacion": id_habitacion,
+                    "fecha_entrada": a_fecha_bson(entrada),
+                    "fecha_salida": a_fecha_bson(salida),
+                    "noches": noches_de(entrada, salida),
+                    "numero_personas": personas,
+                    "total": a_dinero_bson(total),
+                }},
+                session=self._s,
+            )
+        except DuplicateKeyError as e:
+            raise SolapeReservaError("La habitación ya tiene una reserva activa en ese rango") from e
+        except WriteError as e:
+            if e.code == _VALIDACION_FALLIDA:
+                raise DatosInvalidosError("Datos rechazados por el validador de 'reservas'") from e
+            raise
+        return r.matched_count == 1
+
 
 class MongoGestionRepository(_Repo):
     """Consultas de lectura para el panel, la administración y el reporte de ventas (semana 15)."""
@@ -296,6 +321,16 @@ class MongoGestionRepository(_Repo):
                 creada_en=d["creada_en"],
             ))
         return filas
+
+    def cambiar_estado_reserva(self, id_reserva: int, de: str, a: str, estado_habitacion: str | None = None) -> bool:
+        d = self._db.reservas.find_one_and_update(
+            {"_id": id_reserva, "estado": de}, {"$set": {"estado": a}}, session=self._s)
+        if d is None:
+            return False
+        if estado_habitacion:
+            self._db.habitaciones.update_one({"_id": d["id_habitacion"]},
+                                             {"$set": {"estado": estado_habitacion}}, session=self._s)
+        return True
 
     def cancelar_reserva(self, id_reserva: int) -> bool:
         # Solo CONFIRMADA: al pasar a CANCELADA la reserva sale del índice parcial y sus noches quedan libres.

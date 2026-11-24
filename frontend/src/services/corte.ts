@@ -42,3 +42,7 @@ export const consultarDisponibilidad = (q: { id_tipo: number; fecha_entrada: str
 export const crearReserva = (r: ReservaEntrada) => API.post<Reserva>("/api/reservas", r).then((x) => x.data)
 
 export const consultarReserva = (id: number) => API.get<Reserva>(`/api/reservas/${id}`).then((r) => r.data)
+
+/** Semana 15: cambiar fechas o personas de una reserva CONFIRMADA (mismo tipo). */
+export const modificarReserva = (id: number, c: { fecha_entrada: string; fecha_salida: string; numero_personas: number }) =>
+  API.put<Reserva>(`/api/reservas/${id}`, c).then((r) => r.data)

@@ -4,7 +4,8 @@
 |---------------------------------------------|-----------------------------|
 | GET    /api/panel/resumen                   | recepcionista, admin        |
 | GET    /api/reservas?estado&desde&hasta     | personal: todas; huésped: solo las suyas |
-| POST   /api/reservas/{id}/cancelar          | recepcionista, admin        |
+| POST   /api/reservas/{id}/cancelar          | personal; huésped: las suyas, hasta el día antes |
+| POST   /api/reservas/{id}/checkin · checkout | recepcionista, admin        |
 | GET    /api/reportes/ventas?desde&hasta     | admin (JSON para la pantalla) |
 | GET    /api/reportes/ventas.pdf?desde&hasta | admin (descarga en PDF)     |
 | GET/POST /api/admin/usuarios                | admin                       |
@@ -27,6 +28,7 @@ from app.services.gestion import (
     PanelService,
     ReporteVentasService,
 )
+from app.services.errores import SinPermisoError
 from app.services.huespedes import GestionHuespedesService
 
 router = APIRouter(prefix="/api", tags=["Panel, administración y reportes (semana 15)"])
@@ -183,8 +185,30 @@ def listar_reservas(
 
 @router.post("/reservas/{id_reserva}/cancelar", status_code=204, summary="Cancelar una reserva CONFIRMADA",
              responses=_errores(400, 401, 403, 404, 409, 503))
-def cancelar(id_reserva: int = Path(gt=0), _: Usuario = Depends(personal), p: ProveedorRepositorios = Depends(proveedor)):
-    GestionReservasService(p).cancelar(id_reserva)
+def cancelar(id_reserva: int = Path(gt=0), usuario: Usuario = Depends(usuario_actual),
+             p: ProveedorRepositorios = Depends(proveedor)):
+    """Personal: cualquier reserva CONFIRMADA. Huésped: solo las suyas y hasta el día anterior a la llegada."""
+    solo_de = None
+    if not usuario.es_personal:
+        ficha = GestionHuespedesService(p).obtener_por_correo(usuario.correo)
+        if ficha is None:
+            raise SinPermisoError("Su cuenta no está asociada a un huésped registrado.")
+        solo_de = ficha.id_huesped
+    GestionReservasService(p).cancelar(id_reserva, solo_de)
+    return Response(status_code=204)
+
+
+@router.post("/reservas/{id_reserva}/checkin", status_code=204, summary="Check-in: llegada del huésped",
+             responses=_errores(400, 401, 403, 404, 409, 503))
+def check_in(id_reserva: int = Path(gt=0), _: Usuario = Depends(personal), p: ProveedorRepositorios = Depends(proveedor)):
+    GestionReservasService(p).check_in(id_reserva)
+    return Response(status_code=204)
+
+
+@router.post("/reservas/{id_reserva}/checkout", status_code=204, summary="Check-out: salida del huésped",
+             responses=_errores(400, 401, 403, 404, 409, 503))
+def check_out(id_reserva: int = Path(gt=0), _: Usuario = Depends(personal), p: ProveedorRepositorios = Depends(proveedor)):
+    GestionReservasService(p).check_out(id_reserva)
     return Response(status_code=204)
 
 

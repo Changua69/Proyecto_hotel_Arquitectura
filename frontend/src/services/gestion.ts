@@ -52,6 +52,8 @@ export const listarReservas = (f: { estado?: string; desde?: string; hasta?: str
   API.get<ReservaFila[]>("/api/reservas", { params: Object.fromEntries(Object.entries(f).filter(([, v]) => v)) }).then((r) => r.data)
 
 export const cancelarReserva = (id: number) => API.post(`/api/reservas/${id}/cancelar`)
+export const checkIn = (id: number) => API.post(`/api/reservas/${id}/checkin`)
+export const checkOut = (id: number) => API.post(`/api/reservas/${id}/checkout`)
 
 export const reporteVentas = (desde: string, hasta: string) =>
   API.get<Reporte>("/api/reportes/ventas", { params: { desde, hasta } }).then((r) => r.data)

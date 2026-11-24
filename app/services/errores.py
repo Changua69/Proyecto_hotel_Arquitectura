@@ -66,6 +66,20 @@ class HuespedConReservasError(ErrorNegocio):
     codigo = "HUESPED_CON_RESERVAS"
 
 
+class ReservaNoModificableError(ErrorNegocio):
+    """Solo se modifican reservas CONFIRMADAS (y el huésped, hasta el día anterior a la llegada)."""
+
+    http = 409
+    codigo = "RESERVA_NO_MODIFICABLE"
+
+
+class EstadoReservaError(ErrorNegocio):
+    """Check-in/check-out en un estado o un día que no corresponde."""
+
+    http = 409
+    codigo = "ESTADO_NO_PERMITE"
+
+
 class NoAutenticadoError(ErrorNegocio):
     """Falta el token o está vencido: hay que iniciar sesión."""
 

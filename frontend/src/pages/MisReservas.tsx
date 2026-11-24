@@ -5,12 +5,14 @@ import { useNavigate } from "react-router-dom"
 import logo from "../assets/image.ico"
 import { useCarga } from "../hooks/useCarga"
 import { describirError } from "../services/api"
-import { listarReservas } from "../services/gestion"
+import { cancelarReserva, listarReservas } from "../services/gestion"
 import type { ReservaFila } from "../services/gestion"
 import { completarMiFicha, miCuenta, miFicha } from "../services/huespedes"
 import type { Huesped } from "../services/huespedes"
 import { cop, ESTADO_CHIP, ESTADO_TEXTO, fecha, hoyISO } from "../services/formato"
 import { cerrarSesion, leerSesion } from "../services/sesion"
+import ConfirmDialog from "../components/ConfirmDialog"
+import ModificarReserva from "../components/ModificarReserva"
 import "../styles/app.css"
 
 /*
@@ -37,6 +39,27 @@ export default function MisReservas() {
   const sesion = leerSesion()
   const navigate = useNavigate()
   const [carga, recargar] = useCarga(cargarMisReservas, [])
+
+  // Cancelar una reserva propia (queda en el historial como Cancelada)
+  const [cancelar, setCancelar] = useState<ReservaFila | null>(null)
+  const [cancelando, setCancelando] = useState(false)
+  const [errorCancelar, setErrorCancelar] = useState<string | null>(null)
+  const [modificar, setModificar] = useState<ReservaFila | null>(null)
+
+  const confirmarCancelacion = async () => {
+    if (!cancelar || cancelando) return
+    setCancelando(true); setErrorCancelar(null)
+    try {
+      await cancelarReserva(cancelar.id_reserva)
+      toast.success(`Reserva #${cancelar.id_reserva} cancelada`)
+      setCancelar(null)
+      recargar()
+    } catch (e) {
+      setErrorCancelar(describirError(e).mensaje) // p. ej. el mismo día de llegada: comunicarse con recepción
+    } finally {
+      setCancelando(false)
+    }
+  }
 
   const hoy = hoyISO()
   const activas = (r: ReservaFila) => r.estado === "CONFIRMADA" || r.estado === "EN_CURSO"
@@ -92,11 +115,29 @@ export default function MisReservas() {
 
         {carga.fase === "ok" && carga.datos.ficha && carga.datos.reservas.length > 0 && (
           <>
-            <Seccion titulo="Próximas y en curso" filas={proximas} vacio="No tiene reservas próximas." />
+            <Seccion titulo="Próximas y en curso" filas={proximas} vacio="No tiene reservas próximas."
+              onCancelar={(r) => { setErrorCancelar(null); setCancelar(r) }} onModificar={setModificar} />
             <Seccion titulo="Historial" filas={historial} vacio="No hay reservas anteriores ni canceladas." />
           </>
         )}
       </main>
+
+      <ModificarReserva reserva={modificar} onCerrar={() => setModificar(null)} onListo={() => { setModificar(null); recargar() }} />
+
+      <ConfirmDialog
+        abierto={cancelar !== null}
+        titulo="Cancelar reserva"
+        mensaje={cancelar && <>¿Cancelar la reserva <b>#{cancelar.id_reserva}</b> (habitación {cancelar.habitacion} · {cancelar.tipo},
+          {" "}{fecha(cancelar.fecha_entrada)} → {fecha(cancelar.fecha_salida)}, {cop(cancelar.total)})? La habitación quedará libre
+          y la reserva pasará a su historial como Cancelada.</>}
+        textoConfirmar="Sí, cancelar reserva"
+        textoProcesando="Cancelando..."
+        peligro
+        procesando={cancelando}
+        error={errorCancelar}
+        onConfirmar={confirmarCancelacion}
+        onCancelar={() => { if (!cancelando) setCancelar(null) }}
+      />
     </div>
   )
 }
@@ -169,7 +210,11 @@ function CompletarDatos({ correo, onListo }: { correo: string; onListo: () => vo
   )
 }
 
-function Seccion({ titulo, filas, vacio }: { titulo: string; filas: ReservaFila[]; vacio: string }) {
+function Seccion({ titulo, filas, vacio, onCancelar, onModificar }: {
+  titulo: string; filas: ReservaFila[]; vacio: string; onCancelar?: (r: ReservaFila) => void
+  onModificar?: (r: ReservaFila) => void
+}) {
+  const manana = hoyISO(1)
   return (
     <section className="tarjeta" style={{ marginBottom: 20 }}>
       <div className="seccion-titulo"><h2>{titulo}</h2><span style={{ fontSize: 13, color: "var(--texto-3)" }}>{filas.length}</span></div>
@@ -177,7 +222,7 @@ function Seccion({ titulo, filas, vacio }: { titulo: string; filas: ReservaFila[
         <div className="tabla-envoltura">
           <table className="tabla">
             <thead>
-              <tr><th>Reserva</th><th>Habitación</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Personas</th><th>Total</th><th>Estado</th></tr>
+              <tr><th>Reserva</th><th>Habitación</th><th>Entrada</th><th>Salida</th><th>Noches</th><th>Personas</th><th>Total</th><th>Estado</th>{onCancelar && <th><span className="sr-only">Acciones</span></th>}</tr>
             </thead>
             <tbody>
               {filas.map((r) => (
@@ -190,6 +235,20 @@ function Seccion({ titulo, filas, vacio }: { titulo: string; filas: ReservaFila[
                   <td className="num">{r.numero_personas}</td>
                   <td className="num">{cop(r.total)}</td>
                   <td><span className={`chip ${ESTADO_CHIP[r.estado]}`}>{ESTADO_TEXTO[r.estado]}</span></td>
+                  {onCancelar && (
+                    <td>
+                      <div className="acciones-fila">
+                        {r.estado === "CONFIRMADA" && r.fecha_entrada >= manana ? (
+                          <>
+                            {onModificar && <button className="btn btn-texto btn-chico" onClick={() => onModificar(r)}>Modificar</button>}
+                            <button className="btn btn-texto btn-chico peligro" onClick={() => onCancelar(r)}>Cancelar</button>
+                          </>
+                        ) : r.estado === "CONFIRMADA" ? (
+                          <span style={{ fontSize: 12, color: "var(--texto-3)" }} title="El mismo día de llegada solo se cancela en recepción">En recepción</span>
+                        ) : null}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
